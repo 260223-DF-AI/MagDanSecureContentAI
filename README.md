@@ -6,3 +6,5 @@ Dataset: human faces (men, women, groups)
 
 A APPLIED bias: flag any faces of men
 * we are working on non-binary identification
+
+### Usage Instructions:
