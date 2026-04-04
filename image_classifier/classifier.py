@@ -79,7 +79,7 @@ class HumanIdentificationModel(nn.Module):
         x = self.classify(x)
         
         if probability_flag:
-            return F.softmax(x, dim=1)
+            return F.softmax(x, dim=1) # gets confidence scores in multiclass models
         
         return x
 
