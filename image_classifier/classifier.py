@@ -7,6 +7,9 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler
+import pytorch_lightning as pl
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from torchmetrics import Accuracy
 
 DATA_ROOT = "data/humans"
 TRAIN_DIR = os.path.join(DATA_ROOT, "training")
@@ -14,35 +17,47 @@ TEST_DIR = os.path.join(DATA_ROOT, "test")
 
 if not os.path.exists(TRAIN_DIR):
     print(f"ERROR: Dataset directory '{TRAIN_DIR}' not found.")
-    print("Please ensure the 'humans' folder is extracted in the script's directory.")
+    print("Please ensure the 'data/humans' folder is extracted in the script's directory.")
+    sys.exit(1)
+
+if not os.path.exists(TEST_DIR):
+    print(f"ERROR: Dataset directory '{TEST_DIR}' not found.")
+    print("Please ensure the 'data/humans' folder is extracted in the script's directory.")
     sys.exit(1)
 
 data_transforms = transforms.Compose([
     transforms.Resize(tuple((256, 256))),
-    transforms.RandomHorizontalFlip(p=0.3),
-    transforms.RandomVerticalFlip(p=0.3),
-    transforms.RandomRotation(45),
+    transforms.RandomHorizontalFlip(p=0.2),
+    transforms.RandomVerticalFlip(p=0.1),
+    transforms.RandomRotation(20),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
+class ImageFolderWithPaths(datasets.ImageFolder):
+    # override the __getitem__ method
+    def __getitem__(self, index):
+        img, label = super().__getitem__(index)
+        path = self.samples[index][0]  # filepath
+        return img, label, path
+
 train_dataset = datasets.ImageFolder(root=TRAIN_DIR, transform=data_transforms)
-test_dataset = datasets.ImageFolder(root=TEST_DIR, transform=data_transforms)
+test_dataset = ImageFolderWithPaths(root=TEST_DIR, transform=data_transforms)
 
 print(f"Classes found: {train_dataset.classes}")
 print(f"Total training images available: {len(train_dataset)}")
 
-rnd_sampler = RandomSampler(
-    train_dataset, 
-    num_samples=200, # Only draw 200 samples per loop
-    replacement=True  # Required when num_samples is used
-)
+# saved for db dimension later on
+# idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()}
+# idx_to_class[1]   # → "men"
+# idx_to_class[2]   # → "groups"
 
-train_loader = DataLoader(train_dataset, shuffle=True)
-test_loader = DataLoader(test_dataset, shuffle=True)
+BATCH_SIZE = 4
+
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 
 # TODO: add comments
-# implement AMP and early stopping
 # send confidence score to DB model
 
 class HumanIdentificationModel(nn.Module):
@@ -75,72 +90,125 @@ class HumanIdentificationModel(nn.Module):
         )
 
     def forward(self, x, probability_flag=False):
-        x = self.features(x)
-        x = self.classify(x)
+        x = self.classify(self.features(x))
         
         if probability_flag:
-            return F.softmax(x, dim=1) # gets confidence scores in multiclass models
-        
+            return F.softmax(x, dim=1) # gets confidence scores in multi-class models
         return x
 
-def train_loop(dataloader, model, loss_fn, optimizer, epoch, writer):
-    model.train()
-    print(f"\n--- Epoch {epoch + 1} (Sampling {len(dataloader.sampler)} images) ---")
-    
-    for batch, (X, y) in enumerate(dataloader):
-        pred = model(X)
-        loss = loss_fn(pred, y)
+class LitClassifier(pl.LightningModule):
+    def __init__(self, model, lr=0.001):
+        super().__init__()
+        self.model = model
+        self.lr = lr
+        self.loss_fn = nn.CrossEntropyLoss()
+        self.val_accuracy = Accuracy(task='multiclass', num_classes=3)
         
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-        if batch % 10 == 0:
-            print(f"  Batch {batch}: Loss = {loss.item():>7f}")
-        if batch >= 200: break
-        
-        writer.add_scalar('Loss/Train', loss.item(), epoch) # .item() needed because loss is calc'd as tensor, not float
-
-
-def evaluate(dataloader, model, loss_fn, epoch, writer):
-    model.eval()
-    test_loss, correct, total= 0, 0, 0
+        # buffer for storing predictions each epoch
+        self.validation_outputs = []
     
-    with torch.no_grad():
-        for X, y in dataloader:
-            # calculate loss
-            pred = model(X)
-            test_loss = loss_fn(pred, y).item()
-
-            # accuracy 
-            prob = model(X, probability_flag=True)
-            confidence, predicted_class = torch.max(prob, dim=1)
-            
-            correct += (predicted_class == y).sum().item()
-            total += y.size(0)
-            
-    accuracy = (correct / total) * 100
-    writer.add_scalar('Loss/Validation', test_loss, epoch)
-            
-    print(f"  Evaluation: Accuracy = {accuracy:>0.1f}%")
-    print(f"  Epoch {epoch + 1}: eval_Loss = {test_loss:>7f}")
-    # early stop
+    def forward(self, x, probability_flag=False):
+        return self.model(x, probability_flag=probability_flag)
     
+    def training_step(self, batch, batch_idx):
+        X, y = batch
+        pred = self(X)
+        loss = self.loss_fn(pred, y)
+        self.log("train_loss", loss, on_step=True, on_epoch=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        """Runs once per batch.
+
+        Args:
+            batch (_type_): _description_
+            batch_idx (_type_): _description_
+        """
+        X, y, paths = batch
+        pred = self(X)
+        loss = self.loss_fn(pred, y)
+        
+        # accuracy
+        prob = self(X, probability_flag=True)
+        confidence, predicted_class = torch.max(prob, dim=1)
+        acc = self.val_accuracy(predicted_class, y)
+
+        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_accuracy", acc, prog_bar=True)
+        
+        # store for epoch-end processing
+        self.validation_outputs.append({
+            "pred": predicted_class.cpu(),
+            "conf": confidence.cpu(),
+            "y": y.cpu(),
+            "paths": paths
+        })
+    
+    def on_validation_epoch_end(self):
+        """Runs every epoch.
+
+        Args:
+            outputs (_type_): _description_
+        """
+        for batch in self.validation_outputs:
+            preds = batch["pred"]
+            confs = batch["conf"]
+            ys = batch["y"]
+            paths = batch["paths"]
+            
+            for i in range(len(ys)):
+                # Add DB logic
+                if preds[i] != ys[i]:
+                    print(
+                    f"File: {paths[i]} | "
+                    f"Class: {ys[i].item()} | "
+                    f"Pred: {preds[i].item()} | "
+                    f"Confidence: {confs[i].item():.4f}")
+            
+            
+        # clear buffer for next epoch
+        self.validation_outputs.clear()
+    
+    def configure_optimizers(self):
+        return optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0001)
+
+def train_model(train_loader, test_loader):
+    model = HumanIdentificationModel()    
+    lit_model = LitClassifier(model)
+    print(lit_model)
+    
+    early_stop = EarlyStopping(
+        monitor='val_loss',
+        patience=2,
+        mode='min'
+    )
+    
+    checkpoint = ModelCheckpoint(
+        monitor='val_loss',
+        filename='best-checkpoint',
+        save_top_k=1,
+        mode='min'
+    )
+    
+    # NOTE: CPU-only machines (no NVIDIA GPU), cannot use AMP.
+    # To use mixed precision (AMP), change precision=32 → precision=16
+    # AND set accelerator="gpu" on a CUDA-capable system.
+    trainer = pl.Trainer(
+        max_epochs=2,
+        precision=32, # switch to 16 to enable AMP on GPU
+        accelerator='auto',
+        callbacks=[early_stop, checkpoint],
+        log_every_n_steps=1,
+        limit_train_batches=200,
+        num_sanity_val_steps=0
+    )
+    
+    trainer.fit(lit_model, train_loader, test_loader)
+    return lit_model
 
 def main():
-    model = HumanIdentificationModel()
-    print(model)
-    NUM_EPOCHS = 2
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    criterion = nn.CrossEntropyLoss()
-    writer = SummaryWriter(log_dir='./image_classifier/runs/metrics_lab') 
-
-    for epoch in range(NUM_EPOCHS):
-        train_loop(train_loader, model, criterion, optimizer, epoch, writer)
-        evaluate(test_loader, model, criterion, epoch, writer)
-
-    writer.close()
-    print("\nTraining complete! Run 'tensorboard --logdir=image_classifier/runs' to view.")
+    train_model(train_loader, test_loader)
+    print("\nTraining complete! Run 'tensorboard --logdir lightning_logs/' to view.")
 
 if __name__ == "__main__":
     main()
