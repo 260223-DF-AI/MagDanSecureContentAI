@@ -1,30 +1,59 @@
-from src.schemas import ReasoningResult, VisionResult
-from src.services.interfaces import ReasoningEngine
+from src.schemas import LLMTrainingSchema
+from src.services.interfaces import LLMReasoningEngine
 
 
-class StubReasoningEngine(ReasoningEngine):
-    async def analyze_text_and_vision(
+class StubLLMReasoningEngine(LLMReasoningEngine):
+    async def analyze_description(
         self,
-        user_text: str,
-        vision_result: VisionResult,
-    ) -> ReasoningResult:
+        text: str,
+        description_id: str,
+        classification_cat: str,
+    ) -> tuple[LLMTrainingSchema, dict]:
+        lowered = text.lower()
+        thoughts = []
+        actions = []
 
-        if vision_result.label == "Flagged (Unsafe)":
-            return ReasoningResult(
-                decision="policy_violation",
-                generated_response="Post violates policy.",
-                trace={"reason": "unsafe image"},
+        thoughts.append("Check image classification result.")
+        if classification_cat == "Flagged (Unsafe)":
+            output = "Policy Violation"
+            thoughts.append("Unsafe image detected.")
+            actions.append("Block post.")
+            return (
+                LLMTrainingSchema(
+                    llm_train_id=f"llm-{description_id}",
+                    output=output,
+                    is_correct=None,
+                    accuracy=None,
+                    description_key=description_id,
+                ),
+                {
+                    "reasoning_type": "ReAct",
+                    "thoughts": thoughts,
+                    "actions": actions,
+                },
             )
 
-        if "hate" in user_text.lower():
-            return ReasoningResult(
-                decision="policy_violation",
-                generated_response="Post contains unsafe language.",
-                trace={"reason": "unsafe text"},
-            )
+        thoughts.append("Check description text safety.")
+        if any(word in lowered for word in ["hate", "kill", "violent"]):
+            output = "Policy Violation"
+            thoughts.append("Unsafe text detected.")
+            actions.append("Block post.")
+        else:
+            output = "Approved"
+            thoughts.append("Content appears safe.")
+            actions.append("Approve post.")
 
-        return ReasoningResult(
-            decision="approved",
-            generated_response=None,
-            trace={"reason": "safe"},
+        return (
+            LLMTrainingSchema(
+                llm_train_id=f"llm-{description_id}",
+                output=output,
+                is_correct=None,
+                accuracy=None,
+                description_key=description_id,
+            ),
+            {
+                "reasoning_type": "ReAct",
+                "thoughts": thoughts,
+                "actions": actions,
+            },
         )

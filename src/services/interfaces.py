@@ -1,18 +1,24 @@
 from abc import ABC, abstractmethod
-from src.schemas import VisionResult, ReasoningResult
+from src.schemas import CNNTrainingSchema, LLMTrainingSchema
 
 
-class VisionClassifier(ABC):
+class CNNClassifier(ABC):
     @abstractmethod
-    async def classify_image(self, file_bytes: bytes, filename: str) -> VisionResult:
+    async def classify_image(
+        self,
+        file_bytes: bytes,
+        filename: str,
+        image_id: str,
+    ) -> CNNTrainingSchema:
         raise NotImplementedError
 
 
-class ReasoningEngine(ABC):
+class LLMReasoningEngine(ABC):
     @abstractmethod
-    async def analyze_text_and_vision(
+    async def analyze_description(
         self,
-        user_text: str,
-        vision_result: VisionResult,
-    ) -> ReasoningResult:
+        text: str,
+        description_id: str,
+        classification_cat: str,
+    ) -> tuple[LLMTrainingSchema, dict]:
         raise NotImplementedError
