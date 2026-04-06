@@ -14,6 +14,16 @@ from src.services.interfaces import CNNClassifier, LLMReasoningEngine
 
 
 class SecureContentPipeline:
+    """
+    Core orchestration layer.
+
+    This connects:
+    - CNN (image classification)
+    - LLM (text reasoning)
+    - Final decision logic
+
+    It also builds ERD-aligned objects.
+    """
     def __init__(
         self,
         cnn_classifier: CNNClassifier,
@@ -31,12 +41,14 @@ class SecureContentPipeline:
         original_text: str,
         sanitized_text: str,
     ) -> AnalyzePostResponse:
+        # Generate IDs (simulate DB keys)
         user_id = f"user-{uuid4().hex[:8]}"
         image_id = f"img-{uuid4().hex[:8]}"
         description_id = f"desc-{uuid4().hex[:8]}"
         post_id = f"post-{uuid4().hex[:8]}"
         log_id = f"log-{uuid4().hex[:8]}"
 
+        # Build dimension objects (ERD)
         user = DimUserSchema(
             user_id=user_id,
             username=username,
@@ -50,18 +62,21 @@ class SecureContentPipeline:
             correct_cat=None,
         )
 
+        # CNN STEP (Image Classification)
         cnn_training: CNNTrainingSchema = await self.cnn_classifier.classify_image(
             file_bytes=file_bytes,
             filename=filename,
             image_id=image_id,
         )
 
+        # LLM STEP (Reasoning)
         llm_training, trace = await self.llm_reasoning_engine.analyze_description(
             text=sanitized_text,
             description_id=description_id,
             classification_cat=cnn_training.classification_cat,
         )
 
+        # Final Decision Logic
         is_safe_content = llm_training.output == "Approved"
         is_post_allowed = is_safe_content
         post_status = "approved" if is_post_allowed else "policy_violation"
@@ -90,6 +105,7 @@ class SecureContentPipeline:
             post_key=post.post_id,
         )
 
+        # Final API Response
         return AnalyzePostResponse(
             user=user,
             image=image,
