@@ -5,8 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms
-from torch.utils.tensorboard import SummaryWriter
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from torchmetrics import Accuracy
@@ -205,6 +204,14 @@ def train_model(train_loader, test_loader):
     
     trainer.fit(lit_model, train_loader, test_loader)
     return lit_model
+
+def send_training_data_to_db():
+    # add paths to image table - not in this function - DB setup
+    # add data to CNN table
+    # if file_path is not in image table, add it 
+    # merge to add image_keys
+    
+    pass
 
 def main():
     train_model(train_loader, test_loader)

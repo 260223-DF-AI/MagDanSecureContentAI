@@ -1,4 +1,4 @@
-from src.schemas import CNNTrainingSchema
+from models.schemas import CNNTrainingSchema
 from src.services.interfaces import CNNClassifier
 
 
