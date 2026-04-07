@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-from torchvision import datasets, transforms
+from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
@@ -61,35 +61,25 @@ test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True, num_
 
 class HumanIdentificationModel(nn.Module):
     """Model to identify images of humans and detect whether the images is of an individual man or woman or a group of people
-
+    Using ResNet18-based model for human classification.
     Args:
         nn.Module (class): super class for neural network modules.
     """
     def __init__(self):
         super(HumanIdentificationModel, self).__init__()
-        self.flatten = nn.Flatten()
+        # load pretrained model - ResNet18
+        self.model = models.resnet18(weights = models.ResNet18_Weights.DEFAULT)
 
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2), # 256x256 -> 128x128
+        # freeze early layers
+        for param in self.model.parameters():
+            param.requires_grad = False
 
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2), # 128x128 -> 64x64
-
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2), # 64x64 -> 32x32
-        )
-
-        self.classify = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(65536, 3)
-        )
+        # replace final layer (resnet default is 1000 classes) to 3
+        num_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(num_features, 3)
 
     def forward(self, x, probability_flag=False):
-        x = self.classify(self.features(x))
+        x = self.model(x)
         
         if probability_flag:
             return F.softmax(x, dim=1) # gets confidence scores in multi-class models
