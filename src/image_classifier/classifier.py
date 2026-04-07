@@ -11,7 +11,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from torchmetrics import Accuracy
 
-DATA_ROOT = "data/humans"
+DATA_ROOT = 'utils/data/humans'
 TRAIN_DIR = os.path.join(DATA_ROOT, "training")
 TEST_DIR = os.path.join(DATA_ROOT, "test")
 
