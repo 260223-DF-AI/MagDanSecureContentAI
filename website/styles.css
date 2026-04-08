@@ -31,19 +31,19 @@ body {
 .page {
   position: relative;
   min-height: 100vh;
-  padding: 28px;
+  padding: 10px;
 }
 
 .logo {
     width: 100px;
     height: 100px;
     object-fit: contain;
-    border-radius: 5px;
+    border-radius: 1px;
 }
 
 .title {
     align-items: center;
-    height: 400px;
+    height: 600px;
     object-fit: contain;
     margin-top: 1px;
 }
@@ -51,7 +51,7 @@ body {
 .brand {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 1px;
     font-weight: 700;
 }
 
@@ -84,6 +84,22 @@ body {
 /* hover glow */
 .nav-links a:hover {
   transform: translateY(-5px);
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  margin-top: 30px;
+  padding: 50px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 30px;
+}
+
+.hero-copy {
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
 .shape {
