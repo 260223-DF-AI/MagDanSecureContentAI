@@ -3,12 +3,11 @@ import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
-from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from torchmetrics import Accuracy
+import pytorch_lightning as pl
+from torchvision import datasets, transforms, models
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from sqlalchemy.orm import Session 
 from src.models.orm_models import CNNTraining, CNNTrainingRun, DimImage
 from src.models.instances import get_engine
@@ -17,10 +16,10 @@ from src.models.schemas import CNNTrainingSchema, DimImageSchema
 DATA_ROOT = 'utils/data/humans'
 TRAIN_DIR = os.path.join(DATA_ROOT, "training")
 TEST_DIR = os.path.join(DATA_ROOT, "test")
-engine = get_engine()
+engine = get_engine() # used for DB logging
 
 if not os.path.exists(TRAIN_DIR):
-    print(f"ERROR: Dataset directory '{TRAIN_DIR}' not found.")
+    print(f"ERROR: Dataset directory '{TRAIN_DIR}' not found.") # TODO: change to logger
     print("Please ensure the 'utils/data/humans' folder is extracted in the script's directory.")
     sys.exit(1)
 
@@ -56,9 +55,6 @@ BATCH_SIZE = 4
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 
-# TODO: add comments
-# send confidence score to DB model
-
 class HumanIdentificationModel(nn.Module):
     """Model to identify images of humans and detect whether the images is of an individual man or woman or a group of people
     Using ResNet18-based model for human classification.
@@ -82,7 +78,7 @@ class HumanIdentificationModel(nn.Module):
         x = self.model(x)
         
         if probability_flag:
-            return F.softmax(x, dim=1) # gets confidence scores in multi-class models
+            return torch.softmax(x, dim=1) # gets confidence scores in multi-class models
         return x
 
 class LitClassifier(pl.LightningModule):
@@ -109,12 +105,8 @@ class LitClassifier(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        """Runs once per batch.
-
-        Args:
-            batch (_type_): _description_
-            batch_idx (_type_): _description_
-        """
+        """Runs once per batch."""
+        
         X, y, paths = batch
         pred = self(X)
         loss = self.loss_fn(pred, y)
@@ -136,11 +128,8 @@ class LitClassifier(pl.LightningModule):
         })
     
     def on_validation_epoch_end(self):
-        """Runs every epoch.
-
-        Args:
-            outputs (_type_): _description_
-        """
+        """Runs every epoch."""
+        
         try:
             self._send_training_data_to_db()
         except:
@@ -153,8 +142,18 @@ class LitClassifier(pl.LightningModule):
         return optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0001)
 
     def _send_training_data_to_db(self):
-        # add paths to image table - not in this function - DB setup
-        idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()}
+        """Method to send training data to cnn_training table of DB. Runs on evaluation data at the end of every epoch.
+        
+        Data gathered:
+            - Image file path: str
+            - Image id (FK)
+            - Run id (FK)
+            - Correct label: str
+            - Predicted label: str
+            - AI confidence score: float
+            - is_correct: bool
+        """
+        idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()} # dictionary of class names and idxs
         
         with Session(engine) as session:
             for batch in self.validation_outputs:
@@ -171,26 +170,8 @@ class LitClassifier(pl.LightningModule):
                         confidence = float(confs[i].item())
                         is_correct = true_name == pred_name
 
-                        # 1. Ensure image exists in dim_image table
-                        if file_path not in self.existing_imgs:
-                            # Create Pydantic schema
-                            img_schema = DimImageSchema(
-                                image_path=file_path,
-                                correct_cat=str(true_name)
-                            )
-
-                            # Convert to ORM
-                            img_row = DimImage(**img_schema.model_dump())
-                            session.add(img_row)
-                            session.commit()
-                            session.refresh(img_row)
-
-                            # Add to in-memory set
-                            self.existing_imgs.add(file_path)
-
-                        else:
-                            # Fetch existing image row
-                            img_row = session.query(DimImage).filter_by(image_path=file_path).first()
+                        # 1. Verify  image exists in dim_image table
+                        img_row = self.__check_img_exists_in_db(file_path, true_name, session) # adds new entry, in none exists
 
                         # 2. Insert CNNTraining row
                         cnn_schema = CNNTrainingSchema(
@@ -199,15 +180,54 @@ class LitClassifier(pl.LightningModule):
                             is_correct=is_correct,
                             image_key=img_row.image_id,
                             run_key=self.run_id
-                        )
+                        ) # create object
 
-                        cnn_row = CNNTraining(**cnn_schema.model_dump())
+                        cnn_row = CNNTraining(**cnn_schema.model_dump()) # convert obj to ORM
 
                         session.add(cnn_row)
 
                 # Commit all CNN rows at once
                 session.commit()
                 print("Successfully sent training data to db!") # TODO: switch to logger
+                
+    def __check_img_exists_in_db(self, file_path, name, session):
+        """Helper method to verify if an image exists in the dim _image table of DB.
+
+        Args:
+            file_path (str): file_path to image
+            name (str): class/label of image
+            session (Session): orm session for DML
+
+        Raises:
+            ValueError: if img_row not found or created raise error
+
+        Returns:
+            DimImage: the corresponding table row for the provided file_path
+        """
+        img_row = None
+        if file_path not in self.existing_imgs:
+            # Create Pydantic schema
+            img_schema = DimImageSchema(
+                image_path=file_path,
+                label=str(name)
+            )
+
+            # Convert to ORM
+            img_row = DimImage(**img_schema.model_dump())
+            session.add(img_row)
+            session.commit()
+            session.refresh(img_row)
+
+            # Add to in-memory set
+            self.existing_imgs.add(file_path)
+
+        else:
+            # Fetch existing image row
+            img_row = session.query(DimImage).filter_by(image_path=file_path).first()
+        
+        if not img_row: raise ValueError(f"An entry was not found and could not be made for: {file_path}")
+        
+        return img_row
 
 def preload_existing_images(engine):
     """Load all image paths from the DB into a fast lookup set."""
@@ -250,7 +270,7 @@ def train_model(train_loader, test_loader, run_id: int, existing_imgs: set):
     return lit_model
 
 def main():
-    existing_imgs = preload_existing_images(engine)
+    existing_imgs = preload_existing_images(engine) # saves dim_image file paths to local memory for quick verification
 
     # log training session to db
     # adds new row to cnn_training_runs table
