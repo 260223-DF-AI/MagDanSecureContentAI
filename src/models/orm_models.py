@@ -1,9 +1,10 @@
-from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, create_engine
+from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, func
 from sqlalchemy.orm import declarative_base
-from dotenv import load_dotenv
-import os
+from src.models.instances import get_engine
 
 Base = declarative_base()
+# TODO: remove accuracy from erd.png; add training_runs
+## change vars to label, predicted_class
 
 # =========================
 # Dimension Tables
@@ -23,7 +24,7 @@ class DimImage(Base):
 
     image_id = Column(Integer, primary_key=True, autoincrement=True)
     image_path = Column(String, nullable=False)
-    correct_cat = Column(String, nullable=True)
+    label = Column(String, nullable=True)
 
 
 class DimDescription(Base):
@@ -51,15 +52,18 @@ class DimPost(Base):
 # =========================
 
 class CNNTraining(Base):
+    """
+    Grain: Each row represents one image classified by the CNN_model in a given validation stage of a training session.
+    """
     __tablename__ = "cnn_training"
 
     cnn_train_id = Column(Integer, primary_key=True, autoincrement=True)
     confidence_score = Column(Float, nullable=False)
-    classification_cat = Column(String, nullable=False)
+    predicted_class = Column(String, nullable=False)
     is_correct = Column(Boolean, nullable=True)
-    accuracy = Column(Float, nullable=True)
 
     # FK to image
+    run_key = Column(Integer, ForeignKey("cnn_training_runs.run_id"), nullable=False)
     image_key = Column(Integer, ForeignKey("dim_image.image_id"), nullable=False)
 
 
@@ -73,7 +77,12 @@ class LLMTraining(Base):
 
     # FK to description
     description_key = Column(Integer, ForeignKey("dim_description.description_id"), nullable=False)
+    
+class CNNTrainingRun(Base):
+    __tablename__ = "cnn_training_runs"
 
+    run_id = Column(Integer, primary_key=True, autoincrement=True)
+    started_at  = Column(DateTime, server_default=func.now())
 
 class FinalModelLog(Base):
     __tablename__ = "final_model_logs"
@@ -88,14 +97,8 @@ class FinalModelLog(Base):
     # FK to post
     post_key = Column(Integer, ForeignKey("dim_post.post_id"), nullable=False)
 
-def create_tables_in_db():
-    # gather connection string
-    load_dotenv()
-    CS = os.getenv("CS")
-    
-    engine = create_engine(CS)
-    Base.metadata.create_all(engine) # adds all tables to db
-
+# Run file to create all tables in DB
 if __name__ == "__main__":
-    create_tables_in_db()
+    engine = get_engine()
+    Base.metadata.create_all(engine) # adds all tables to db
     print(f"Created tables in database: {Base.metadata.tables.keys()}") # TODO: change this to a logger

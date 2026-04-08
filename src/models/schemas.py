@@ -22,7 +22,7 @@ class DimImageSchema(BaseModel):
     """
     image_id: int | None = None
     image_path: str
-    correct_cat: str | None = None
+    label: str | None = None
 
 
 class DimDescriptionSchema(BaseModel):
@@ -41,9 +41,9 @@ class DimPostSchema(BaseModel):
     """
     post_id: int | None = None
     status: str
-    user_key: str
-    image_key: str
-    description_key: str
+    user_key: int
+    image_key: int
+    description_key: int
 
 
 # =========================
@@ -57,10 +57,10 @@ class CNNTrainingSchema(BaseModel):
     """
     cnn_train_id: int | None = None
     confidence_score: float
-    classification_cat: str
+    predicted_class: str
     is_correct: bool | None = None
-    accuracy: float | None = None
-    image_key: str
+    image_key: int
+    run_key: int
 
 
 class LLMTrainingSchema(BaseModel):
@@ -72,7 +72,7 @@ class LLMTrainingSchema(BaseModel):
     output: str
     is_correct: bool | None = None
     accuracy: float | None = None
-    description_key: str
+    description_key: int
 
 
 class FinalModelLogsSchema(BaseModel):
@@ -86,7 +86,7 @@ class FinalModelLogsSchema(BaseModel):
     is_correct_prompt: bool | None = None
     is_post_allowed: bool
     policy_check_accuracy: float | None = None
-    post_key: str
+    post_key: int
 
 # =========================
 # Final API Response
