@@ -34,6 +34,26 @@ body {
   padding: 28px;
 }
 
+.logo {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.title {
+    height: 500px;
+    object-fit: contain;
+    margin-top: 1px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+}
+
 .shape {
   position: absolute;
   border-radius: 50%;
