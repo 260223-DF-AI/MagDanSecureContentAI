@@ -3,4 +3,4 @@
 .env
 __pycache__/
 *.pyc
-src/image_classifier/training_db_setup.sql
+training_db_setup.sql
