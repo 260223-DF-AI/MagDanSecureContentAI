@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, Form, UploadFile
 
-from src.schemas import AnalyzePostResponse
+from models.schemas import AnalyzePostResponse
 from src.core.security import sanitize_user_text
 from src.services.pipeline import SecureContentPipeline
 from src.services.reasoning_stub import StubLLMReasoningEngine

@@ -1,4 +1,4 @@
-from src.schemas import LLMTrainingSchema
+from models.schemas import LLMTrainingSchema
 from src.services.interfaces import LLMReasoningEngine
 
 

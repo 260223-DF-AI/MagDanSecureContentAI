@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.schemas import CNNTrainingSchema, LLMTrainingSchema
+from models.schemas import CNNTrainingSchema, LLMTrainingSchema
 
 # =========================
 # ABSTRACT INTERFACES

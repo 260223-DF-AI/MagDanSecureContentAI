@@ -1,2 +1,5 @@
 /venv
-/.env
+/lightning_logs
+.env
+__pycache__/
+*.pyc

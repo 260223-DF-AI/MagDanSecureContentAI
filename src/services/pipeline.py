@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from src.schemas import (
+from models.schemas import (
     AnalyzePostResponse,
     CNNTrainingSchema,
     DimDescriptionSchema,
