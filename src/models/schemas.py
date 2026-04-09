@@ -107,3 +107,4 @@ class AnalyzePostResponse(BaseModel):
     final_model_log: FinalModelLogsSchema
     # Debug / explainability trace (ReAct reasoning)
     trace: dict
+    
