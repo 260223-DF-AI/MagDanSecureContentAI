@@ -100,12 +100,13 @@ body {
 }
 
 .logo-icon {
-  width: 68px;
-  height: 68px;
+  width: 300px;
+  height: auto;
   object-fit: contain;
   filter: drop-shadow(0 8px 18px rgba(242, 93, 168, 0.28));
 }
 
+/*
 .logo-title {
   width: 100%;
   max-width: 320px;
@@ -113,6 +114,7 @@ body {
   display: block;
   filter: drop-shadow(0 8px 18px rgba(242, 93, 168, 0.18));
 }
+  */
 
 .login-tagline {
   text-align: center;
