@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from torchvision import datasets, transforms, models
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from sqlalchemy.orm import Session
-from src.audit_db.add_img_dataset_to_db import check_img_exists_in_db
+from utils.audit_db.add_img_dataset_to_db import check_img_exists_in_db
 from src.models.orm_models import CNNTraining, CNNTrainingRun
 from src.models.instances import get_engine
 from src.models.schemas import CNNTrainingSchema
@@ -180,7 +180,7 @@ class LitClassifier(pl.LightningModule):
                 session.rollback()
                 raise ConnectionError(f"DB commit failed: {e}")
                 
-        print("Successfully sent training data to db!") # TODO: switch to logger
+        print("Successfully sent training data to db!\n") # TODO: switch to logger
 
     def __data_to_db_inner_loop(self, batch, session):
         """Private helper method to add entries to cnn_training table
@@ -226,7 +226,7 @@ def train_model(train_loader, test_loader, run_id: int):
     
     early_stop = EarlyStopping(
         monitor='val_loss',
-        patience=2,
+        patience=1,
         mode='min'
     )
     
@@ -241,12 +241,12 @@ def train_model(train_loader, test_loader, run_id: int):
     # To use mixed precision (AMP), change precision=32 → precision=16
     # AND set accelerator="gpu" on a CUDA-capable system.
     trainer = pl.Trainer(
-        max_epochs=2,
+        max_epochs=100,
         precision=32, # switch to 16 to enable AMP on GPU
         accelerator='auto',
         callbacks=[early_stop, checkpoint],
         log_every_n_steps=1,
-        limit_train_batches=200,
+        limit_train_batches=400,
         num_sanity_val_steps=0
     )
     

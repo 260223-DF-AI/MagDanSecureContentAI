@@ -31,7 +31,7 @@ class DimDescriptionSchema(BaseModel):
     """
     description_id: int | None = None
     text: str
-    is_safe_content: bool
+    is_safe_content: bool | None = None
 
 
 class DimPostSchema(BaseModel):
@@ -40,7 +40,7 @@ class DimPostSchema(BaseModel):
     (joins user, image, description)
     """
     post_id: int | None = None
-    status: str
+    status: str | None = None
     user_key: int
     image_key: int
     description_key: int

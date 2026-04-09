@@ -44,7 +44,7 @@ class DimDescription(Base):
 
     description_id = Column(Integer, primary_key=True, autoincrement=True)
     text = Column(String, nullable=False)
-    is_safe_content = Column(Boolean, nullable=False)
+    is_safe_content = Column(Boolean, nullable=True)
 
 
 class DimPost(Base):
@@ -55,7 +55,7 @@ class DimPost(Base):
     __tablename__ = "dim_post"
 
     post_id = Column(Integer, primary_key=True, autoincrement=True)
-    status = Column(String, nullable=False)
+    status = Column(String, nullable=True)
 
     # Foreign keys
     user_key = Column(Integer, ForeignKey("dim_user.user_id"), nullable=False)
