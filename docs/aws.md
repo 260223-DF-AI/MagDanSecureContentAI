@@ -25,3 +25,11 @@ Connect to SageMaker
 1. In the AWS Toolkit extension panel...
 2. Expand SageMaker
     - you can see notebooks, training jobs, any end points
+
+
+## Steps to get keys:
+1. In the IAM console... go to users and click on user name
+- if it's your user, though, click on your name in the upper right hand corner.
+2. Click the tab "security credentials"
+3. Scroll down to access keys -> create access key
+- this will generate your access and secret key (jot this down somewhere)
