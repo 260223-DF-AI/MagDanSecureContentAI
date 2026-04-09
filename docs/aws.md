@@ -19,6 +19,9 @@ Configure AWS credentials
 * Region
 * output format
 
+3. YOU CAN do this same thing through the extension with "using IAM credentials"
+- this is the 3rd option
+
 ### Step 3-
 Connect to SageMaker
 
