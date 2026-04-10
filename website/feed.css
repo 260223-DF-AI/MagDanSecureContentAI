@@ -1,0 +1,145 @@
+:root {
+  --pink-100: #fff5fb;
+  --pink-200: #ffe3f1;
+  --pink-300: #ffc8e3;
+  --pink-400: #ff9fd0;
+  --pink-500: #f25da8;
+  --pink-600: #de3b92;
+  --purple-200: #ead7ff;
+  --purple-300: #d9b8ff;
+  --text-dark: #5b2d49;
+  --text-soft: #7f4d68;
+  --white: #ffffff;
+  --glass: rgba(255, 255, 255, 0.72);
+  --border: rgba(242, 93, 168, 0.18);
+  --shadow: 0 18px 40px rgba(222, 59, 146, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-dark);
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(255, 248, 252, 0.6), rgba(255, 241, 247, 0.72)),
+    url("images/herSpaceBack.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.feed-page {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 300px;
+  gap: 24px;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.sidebar,
+.feed-topbar,
+.stories-row,
+.composer-card,
+.post-card,
+.profile-card,
+.trend-card,
+.friends-card {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.sidebar {
+  border-radius: 30px;
+  padding: 24px 20px;
+  height: fit-content;
+}
+
+.brand-icon {
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(242, 93, 168, 0.28));
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;   /* stacks vertically */
+  gap: 14px;                /* ⭐ spacing between buttons */
+}
+
+.side-link {
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+
+    background: linear-gradient(135deg, #ff8fc0, #de3b92);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 14px 16px;
+    border-radius: 18px;
+    position: relative;
+    transition: all 0.25s ease;
+}
+.side-link::after {
+  content: "";
+  position: absolute;
+  width: 0%;
+  height: 2px;
+  bottom: 6px;
+  left: 16px;
+
+  background: linear-gradient(135deg, #ff8fc0, #de3b92);
+  transition: width 0.25s ease;
+}
+
+.side-link:hover::after {
+  width: 60%;
+}
+
+.side-link.active {
+  background: linear-gradient(135deg, #ff8fc0, #de3b92);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  font-weight: 800;
+}
+
+.create-post-btn {
+  width: 100%;
+  margin-top: 20px;
+
+  padding: 16px 18px;
+  border-radius: 999px;
+  border: none;
+
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+
+  cursor: pointer;
+
+  background: linear-gradient(135deg, #ff8fc0, #de3b92);
+  color: white;
+
+  box-shadow:
+    0 12px 25px rgba(222, 59, 146, 0.35),
+    0 4px 10px rgba(255, 143, 192, 0.25);
+
+  transition: all 0.25s ease;
+}
+
+.create-post-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+
+  box-shadow:
+    0 18px 35px rgba(222, 59, 146, 0.45),
+    0 6px 14px rgba(255, 143, 192, 0.35);
+}
