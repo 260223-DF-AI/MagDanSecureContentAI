@@ -43,7 +43,6 @@ body {
 }
 
 .sidebar,
-.feed-topbar,
 .stories-row,
 .composer-card,
 .post-card,
@@ -61,6 +60,20 @@ body {
   padding: 24px 20px;
   height: fit-content;
 }
+
+.feed-topbar {
+    background: var(--glass);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  width: 100%;              /* extends past content */
+  margin-left: -5%;         /* centers the overflow */
+  padding: 20px 28px;
+  border-radius: 32px;
+  box-shadow: 0 20px 45px rgba(222, 59, 146, 0.18);
+  border: 1px solid rgba(242, 93, 168, 0.2);
+  align-items: center;
+}
+
 
 .brand-icon {
   width: 200px;
@@ -142,4 +155,41 @@ body {
   box-shadow:
     0 18px 35px rgba(222, 59, 146, 0.45),
     0 6px 14px rgba(255, 143, 192, 0.35);
+}
+
+.top-actions {
+  display: flex;
+  justify-content: center;  /* centers buttons */
+  gap: 12px;
+}
+
+.top-chip {
+  border-radius: 999px;
+  padding: 12px 20px;
+
+  font-weight: 700;
+  font-size: 0.80rem;
+
+  cursor: pointer;
+  border: none;
+
+  transition: all 0.25s ease;
+
+  /* soft inactive style */
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--pink-600);
+
+  box-shadow: 0 6px 14px rgba(242, 93, 168, 0.12);
+}
+
+.top-chip:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #ff8fc0, #de3b92);
+  color: white;
+
+  box-shadow: 0 12px 25px rgba(222, 59, 146, 0.3);
+}
+
+.top-chip:active {
+  transform: scale(0.96);
 }
