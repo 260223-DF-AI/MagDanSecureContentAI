@@ -121,21 +121,21 @@ def train(
     use_amp = torch.cuda.is_available() and args.use_amp
 
     train_dir = Path(args.train)
-    val_dir = Path(args.validation)
+    test_dir = Path(args.test)
     model_dir = Path(args.model_dir)
     output_data_dir = Path(args.output_data_dir)
 
     if not train_dir.exists():
         raise FileNotFoundError(f"Training directory not found: {train_dir}")
-    if not val_dir.exists():
-        raise FileNotFoundError(f"Validation directory not found: {val_dir}")
+    if not test_dir.exists():
+        raise FileNotFoundError(f"Test directory not found: {test_dir}")
 
     train_dataset = datasets.ImageFolder(
         root=str(train_dir),
         transform=build_transforms(),
     )
-    val_dataset = datasets.ImageFolder(
-        root=str(val_dir),
+    test_dataset = datasets.ImageFolder(
+        root=str(test_dir),
         transform=build_eval_transforms(),
     )
 
@@ -149,8 +149,8 @@ def train(
         num_workers=args.num_workers,
         pin_memory=torch.cuda.is_available(),
     )
-    val_loader = DataLoader(
-        val_dataset,
+    test_loader = DataLoader(
+        test_dataset,
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.num_workers,
@@ -162,7 +162,7 @@ def train(
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
     scaler = GradScaler('cuda',enabled=use_amp)
 
-    best_val_loss = float("inf")
+    best_test_loss = float("inf")
     epochs_without_improvement = 0
 
     for epoch in range(args.epochs):
@@ -193,20 +193,20 @@ def train(
         train_loss = running_loss / max(running_count, 1)
         train_acc = running_correct / max(running_count, 1)
 
-        val_loss, val_acc = evaluate(model, val_loader, criterion, device)
+        test_loss, test_acc = evaluate(model, test_loader, criterion, device)
 
         logger.info(
-            "Epoch %s/%s | train_loss=%.4f train_acc=%.4f | val_loss=%.4f val_acc=%.4f",
+            "Epoch %s/%s | train_loss=%.4f train_acc=%.4f | test_loss=%.4f test_acc=%.4f",
             epoch + 1,
             args.epochs,
             train_loss,
             train_acc,
-            val_loss,
-            val_acc,
+            test_loss,
+            test_acc,
         )
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if test_loss < best_test_loss:
+            best_test_loss = test_loss
             epochs_without_improvement = 0
 
             model_dir.mkdir(parents=True, exist_ok=True)
@@ -216,11 +216,11 @@ def train(
             metadata = {
                 "classes": train_dataset.classes,
                 "num_classes": num_classes,
-                "best_val_loss": best_val_loss,
+                "best_test_loss": best_test_loss,
                 "train_loss": train_loss,
                 "train_acc": train_acc,
-                "val_loss": val_loss,
-                "val_acc": val_acc,
+                "test_loss": test_loss,
+                "test_acc": test_acc,
                 "image_size": [256, 256],
             }
 
@@ -242,7 +242,7 @@ def train(
     with open(output_data_dir / "training_summary.json", "w", encoding="utf-8") as f:
         json.dump(
             {
-                "best_val_loss": best_val_loss,
+                "best_test_loss": best_test_loss,
                 "epochs_requested": args.epochs,
                 "patience": args.patience,
                 "use_amp": use_amp,
@@ -269,12 +269,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--train",
         type=str,
-        default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train"),
+        default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/Train"),
     )
     parser.add_argument(
-        "--validation",
+        "--test",
         type=str,
-        default=os.environ.get("SM_CHANNEL_VALIDATION", "/opt/ml/input/data/validation"),
+        default=os.environ.get("SM_CHANNEL_TEST", "/opt/ml/input/data/Test"),
     )
     parser.add_argument(
         "--model_dir",

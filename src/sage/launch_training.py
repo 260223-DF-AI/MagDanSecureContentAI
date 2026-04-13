@@ -17,7 +17,7 @@ S3_PREFIX = os.getenv("S3_PREFIX", "securecontent-ai")
 ROLE_ARN = os.getenv("SAGEMAKER_ROLE_ARN", "REPLACE_ME")
 
 TRAIN_S3_URI = f"s3://{S3_BUCKET}/{S3_PREFIX}/data/train"
-VAL_S3_URI = f"s3://{S3_BUCKET}/{S3_PREFIX}/data/validation"
+TEST_S3_URI = f"s3://{S3_BUCKET}/{S3_PREFIX}/data/test"
 OUTPUT_S3_URI = f"s3://{S3_BUCKET}/{S3_PREFIX}/output"
 
 FRAMEWORK_VERSION = "2.4.0"
@@ -60,8 +60,8 @@ def main() -> None:
                 s3_data=TRAIN_S3_URI,
                 content_type="application/x-image",
             ),
-            "validation": TrainingInput(
-                s3_data=VAL_S3_URI,
+            "test": TrainingInput(
+                s3_data=TEST_S3_URI,
                 content_type="application/x-image",
             ),
         },
