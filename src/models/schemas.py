@@ -104,7 +104,7 @@ class VisionResult(BaseModel):
 # Final API Response
 # =========================
 
-class AnalyzePostResponse(BaseModel):
+class AnalyzeResponse(BaseModel):
     """
     Full API response — mirrors ERD structure.
 
