@@ -2,7 +2,6 @@ from typing import Annotated
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
-
 from src.models.schemas import AnalyzeResponse
 from src.services.vision_service import VisionService
 from src.services.llm_service import LLMService
