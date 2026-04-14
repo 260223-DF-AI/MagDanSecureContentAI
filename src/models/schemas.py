@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Any
 
 # validates data types using pydantic
 
@@ -73,6 +74,10 @@ class LLMTrainingSchema(BaseModel):
     is_correct: bool | None = None
     accuracy: float | None = None
     description_key: int
+    moderation_label: str
+    is_comment_allowed: bool
+    reason: str
+    suggested_response: str
 
 
 class FinalModelLogsSchema(BaseModel):
@@ -87,6 +92,13 @@ class FinalModelLogsSchema(BaseModel):
     is_post_allowed: bool
     policy_check_accuracy: float | None = None
     post_key: int
+
+class VisionResult(BaseModel):
+    predicted_class: str
+    confidence_score: float
+    class_probabilities: dict[str, float]
+    is_post_allowed: bool
+    reason: str
 
 # =========================
 # Final API Response
@@ -107,4 +119,11 @@ class AnalyzePostResponse(BaseModel):
     final_model_log: FinalModelLogsSchema
     # Debug / explainability trace (ReAct reasoning)
     trace: dict
+    filename: str
+    content_type: str
+    input_text: str
+    vision: VisionResult
+    final_decision: str
+    is_allowed: bool
+    reasoning: dict[str, Any]
     

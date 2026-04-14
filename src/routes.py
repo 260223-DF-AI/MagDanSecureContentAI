@@ -3,8 +3,8 @@ from fastapi import APIRouter, File, Form, UploadFile
 from models.schemas import AnalyzePostResponse
 from src.core.security import sanitize_user_text
 from src.services.pipeline import SecureContentPipeline
-from src.services.reasoning_stub import StubLLMReasoningEngine
-from src.services.vision_stub import StubCNNClassifier
+from src.services.llm_service import LLMService
+from MagDanSecureContentAI.src.services.vision_service import StubCNNClassifier
 
 # Router groups all endpoints together
 router = APIRouter()
@@ -13,7 +13,7 @@ router = APIRouter()
 # These are STUBS (temporary implementations)
 # Later: replace with SageMaker / real model endpoints
 cnn_service = StubCNNClassifier()
-llm_service = StubLLMReasoningEngine()
+llm_service = LLMService()
 
 # Pipeline orchestrates the full workflow (CNN -> LLM -> final output)
 pipeline = SecureContentPipeline(
