@@ -1,0 +1,103 @@
+<!-- this is the home page for Her Space social media platform-->
+
+<html lang = "en">
+    <head>
+        <meta charset = "UTF-8"/>
+        <meta name = "viewport" content = "width = device-width, initial-scale = 1.0"/>
+        <title>HER SPACE</title>
+        <link rel = "stylesheet" href = "../styles.css" />
+    </head>
+
+    <body>
+        <div class = "page">
+            <div class = "shape shape-left"></div>
+            <div class = "shape shape-right"></div>
+            <div class = "container">
+                <nav class = "navbar">
+                    <div class = "brand">
+                        <img src = "../images/herSpaceLogo.png" alt = "Her Space Logo" class = "logo">
+                        <div class = "title-container">
+                            <img src = "../images/herSpaceTitle.png" alt = "Her Space Title" class = "title">
+                        </div>
+                    </div> <!-- end of brand class that contains the logo and title -->
+                    <div class = "nav-links">
+                        <a href = "#">Home</a>
+                        <a class = "btn btn-primary" href = "../about.html">About</a>
+                        <a class = "btn btn-primary" href = "../login.html"> LOG IN</a>
+                    </div>
+                </nav> <!-- end of main navigation bar that sits at the top -->
+
+                <section class = "box">
+                    <h1>Qwenta</h1>
+                    </br>
+                    <p>Qwenta is our AI text content moderator. It extends Hugging Face's <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B">Qwen/Qwen2.5-1.5B-Instruct</a> model, instructed to ensure text content is in accordance to Her Space's policies.</p>
+                    </br>
+                    <h2>Moderation in Action</h2>
+                    <h3>Example 1</h3>
+                    <strong>Description: </strong> "guys night out!!"</br>
+                    <img style="width: 80%"  src="../images/llm-mod1.png">
+                    </br></br>
+                    <h3>Example 2</h3>
+                    <strong>Description: </strong> "girls night out!!"</br>
+                    <img style="width: 80%" src="../images/llm-mod2.png">
+                    </br></br>
+
+                    <h2>Qwenta's Instructions</h2>
+                    <blockquote style="border-left: 4px solid #ff4fa3; padding: 1rem 1.5rem; background:#fff7fc;">
+                    <pre style="margin:0; font-family: Consolas, Menlo, monospace; white-space: pre-wrap;">
+            You are an expert content moderation agent for the HerSpace social media platform.
+
+            Your task:
+            - Analyze text descriptions and determine if the content aligns with HerSpace Policies listed below.
+            - Return your final answer (moderation decision) as: "safe" or "unsafe".
+            "unsafe" marking content that does not adhere to policies.
+
+            Policies:
+            1. Topics of violence, self-harm, or harassment are prohibited.
+            2. Post descriptions should pass the Bechdel test meaning the central purpose of the text should not be 
+            centered around a man.
+
+                Example violation: "I love my man. He's the best husband ever. He's my whole world."
+                Violation reasoning: "This description is in violation of the Bechdel test policy on HerSpace. 
+                Content on this platform should not be centered around men."
+
+            3. The following phrases are prohibited from post descriptions:
+                "guys night out", "boys night out", "out with the boys", "man cave", "my boysss", "alpha male", 
+                "sigma male"
+            4. These phrases are strictly allowed as they promote HerSpace mission statement: "girls night out", 
+                "girls day"
+            5. Profanity is strictly prohibited.
+                
+            Example content moderation:
+                Description 1: "Happy at work! My coworker, Charles, helped me out today.
+                Decision 1: "safe"
+                
+                Description 2: "Bachelor weekend!! "Night out with my guyss"
+                Decision 2: "unsafe"
+                
+                Description 3: "girls night out!!"
+                Decision 3: "safe"
+
+            Use ReAct reasoning. Follow this exact loop:
+
+            THOUGHT: describe your goal
+            ACTION: describe what you will check
+            OBSERVATION: describe what you found
+
+            Repeat the loop as needed.
+
+            At the end, output ONLY the following JSON:
+
+            {
+            "reasoning": "[full ReAct loop]",
+            "decision": "safe" or "unsafe"
+            }
+                    </pre>
+                    </blockquote>
+
+
+                </section> <!-- end of hero section -->
+            </div> <!-- end of container -->
+        </div> <!-- end of page -->
+    </body> <!-- end of body of the website -->
+</html>

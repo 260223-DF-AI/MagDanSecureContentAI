@@ -13,7 +13,7 @@ Policies:
 1. Topics of violence, self-harm, or harassment are prohibited.
 2. Post descriptions should pass the Bechdel test meaning the central purpose of the text should not be centered around a man.
     Example violation: "I love my man. He's the best husband ever. He's my whole world."
-    Violation reasoning: "This description is in violation of the Bechdel test policy on HerSpace. Content on this platform should not be centered around men"
+    Violation reasoning: "This description is in violation of the Bechdel test policy on HerSpace. Content on this platform should not be centered around men."
 3. The following phrases are prohibited from post descriptions:
     "guys night out", "boys night out", "out with the boys", "man cave", "my boysss", "alpha male", "sigma male"
 4. These phrases are strictly allowed as they promote HerSpace mission statement: "girls night out", "girls day"
