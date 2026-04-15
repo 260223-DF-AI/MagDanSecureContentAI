@@ -1,4 +1,4 @@
-# creates the package model group, then registers the trained model
+## creates the package model group, then registers the trained model
 # as a version in sage model registry
 
 import os
@@ -10,8 +10,11 @@ from sagemaker.pytorch import PyTorchModel
 
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
-S3_BUCKET = os.getenv("S3_BUCKET", "REPLACE_ME")
-ROLE_ARN = os.getenv("SAGEMAKER_ROLE_ARN", "REPLACE_ME")
+boto_session = boto3.Session(region_name=AWS_REGION)
+sagemaker_session = sagemaker.Session(boto_session=boto_session)
+bucket = sagemaker_session.default_bucket()
+print("Using bucket:", bucket)
+ROLE_ARN = sagemaker.get_execution_role()
 MODEL_PACKAGE_GROUP_NAME = os.getenv(
     "MODEL_PACKAGE_GROUP_NAME",
     "securecontent-cnn-model-group",
@@ -20,7 +23,7 @@ MODEL_PACKAGE_GROUP_NAME = os.getenv(
 # Paste the actual artifact path from launch_training.py output if needed
 MODEL_ARTIFACT_S3_URI = os.getenv(
     "MODEL_ARTIFACT_S3_URI",
-    "REPLACE_ME",
+    "no",
 )
 
 FRAMEWORK_VERSION = "2.4.0"
@@ -48,7 +51,7 @@ def main() -> None:
     sm_client = boto_session.client("sagemaker")
     sagemaker_session = sagemaker.Session(
         boto_session=boto_session,
-        default_bucket=S3_BUCKET,
+        bucket=S3_BUCKET,
     )
 
     ensure_model_package_group(sm_client, MODEL_PACKAGE_GROUP_NAME)

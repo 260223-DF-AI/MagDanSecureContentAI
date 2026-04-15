@@ -7,3 +7,4 @@
 3. Copy the printed Model artifact S3 URI
 4. Set that as MODEL_ARTIFACT_S3_URI
 5. Run python register_model.py
+- this (the updated version) is at the bottom of "launch_training.py"
