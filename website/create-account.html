@@ -22,7 +22,7 @@
 
         <p class="signup-tagline">Create your account and step into your space.</p>
 
-        <form class="signup-form" action="feed.html" method="GET">
+        <form class="signup-form" id="signupForm">
           <div class="input-group">
             <label for="username">Username</label>
             <input
@@ -70,5 +70,33 @@
       </div>
     </div>
   </div>
+  <script>
+  const signupForm = document.getElementById("signupForm");
+
+  signupForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch("/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, email, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(data.message);
+      window.location.href = "feed.html";
+    } else {
+      alert(data.message);
+    }
+  });
+</script>
 </body>
 </html>
