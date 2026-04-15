@@ -1,70 +1,12 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from src.description_analysis.policy import DEFAULT_POLICY, validate_and_sanitize
+from sqlalchemy.orm import Session
+from src.models.instances import get_engine  
+from src.models.orm_models import LLMTraining, DimDescription
+from src.models.schemas import LLMTrainingSchema, DimDescriptionSchema
 
-# TODO: review default_ policy + input sanitation
-DEFAULT_POLICY = """
-You are an expert sentiment analysis agent for the HerSpace social media platform.
-
-Follow these rules:
-- Always use chain-of-thought reasoning with ReAct looping
-    Loop to follow:
-    1. Thought: describe your goal
-    2. Action: define what to to to reach the goal
-    3. Observation: State what your action achieved. 
-- Output in in the following JSON format:
-    {
-        Reasoning: [ReAct loop, including thought, action, and observation]
-        Decision: [final answer: "safe" or "unsafe]
-    }
-    
-Your task:
-- Analyze text descriptions and determine if the content aligns with HerSpace Policies listed below.
-- Return your final answer (moderation decision) as: "safe" or "unsafe".
-"unsafe" marking content that does not adhere to policies.
-
-Policies:
-1. Topics of violence, self-harm, or harassment are prohibited.
-2. Post descriptions should pass the Bechdel test meaning the central purpose of the text should not be centered around a man.
-    Example violation: "I love my man. He's the best husband ever. He's my whole world."
-    Violation reasoning: "This description is in violation of the Bechdel test policy on HerSpace. Content on this platform should not be centered around men"
-3. The following phrases are strictly prohibited from post descriptions:
-    "guys night out", "boys night out", "out with the boys", "man cave", "my boysss", "alpha male", "sigma male"
-4. Profanity is strictly prohibited.
-    
-Example content moderation:
-    Description 1: "Happy at work! My coworker, Charles, helped me out today.
-    Decision 1: "safe"
-    Reasoning: "A man, Charles, is mentioned, but he is not the central focus of the text, the user's work is the focus."
-    
-    Description 2: "Bachelor weekend!! "Night out with my guyss"
-    Decision 2: "unsafe"
-    Reasoning: "Description uses variations of prohibited words: "guys night out", "my boysss."
-"""
-
-SIMPLE_POLICY = """
-You are an expert sentiment analysis agent for the HerSpace social media platform.
-
-Your task:
-- Analyze text descriptions and determine if the content aligns with HerSpace Policies listed below.
-- Return your final answer (moderation decision) as: "safe" or "unsafe".
-"unsafe" marking content that does not adhere to policies.
-
-Policies:
-1. Topics of violence, self-harm, or harassment are prohibited.
-2. Post descriptions should pass the Bechdel test meaning the central purpose of the text should not be centered around a man.
-    Example violation: "I love my man. He's the best husband ever. He's my whole world."
-    Violation reasoning: "This description is in violation of the Bechdel test policy on HerSpace. Content on this platform should not be centered around men"
-3. The following phrases are strictly prohibited from post descriptions:
-    "guys night out", "boys night out", "out with the boys", "man cave", "my boysss", "alpha male", "sigma male"
-4. Profanity is strictly prohibited.
-    
-Example content moderation:
-    Description 1: "Happy at work! My coworker, Charles, helped me out today.
-    Decision 1: "safe"
-    
-    Description 2: "Bachelor weekend!! "Night out with my guyss"
-    Decision 2: "unsafe"
-"""
+engine = get_engine() # used for DB logging
 
 def initialize_nlp_pipeline(model_name):
     
@@ -82,7 +24,7 @@ def initialize_nlp_pipeline(model_name):
     
     return tokenizer, model
 
-def analyze_sentiment(tokenizer: AutoTokenizer, model: AutoModelForCausalLM, description: str):
+def moderate_content(tokenizer: AutoTokenizer, model: AutoModelForCausalLM, description: str):
     """
     Task 2: Tokenize and Perform Inference
     """
@@ -90,8 +32,7 @@ def analyze_sentiment(tokenizer: AutoTokenizer, model: AutoModelForCausalLM, des
     
     # prepare inputs
     messages = [
-        # {"role": "system", "content": DEFAULT_POLICY},
-        {"role": "user", "content": SIMPLE_POLICY + "\n\nDescription: " + description}
+        {"role": "user", "content": DEFAULT_POLICY + "\n\nDescription: " + description}
     ]
     
     text = tokenizer.apply_chat_template(
@@ -107,10 +48,14 @@ def analyze_sentiment(tokenizer: AutoTokenizer, model: AutoModelForCausalLM, des
     with torch.no_grad():
         output_ids = model.generate(
             **inputs,
-            max_new_tokens=100,
+            max_new_tokens=500,
         )
 
-    response = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+    # Drop the input prompt from model output
+    prompt_len = inputs["input_ids"].shape[1]
+    generated_ids = output_ids[0][prompt_len:]
+
+    response = tokenizer.decode(generated_ids, skip_special_tokens=True)
     print("\nModel Output:\n", response)
 
     # Extract final label
@@ -120,15 +65,47 @@ def analyze_sentiment(tokenizer: AutoTokenizer, model: AutoModelForCausalLM, des
         decision = "safe"
 
 
+    # -----------------------------
+    # AUDIT DB LOGGING
+    # -----------------------------
+    try:
+        with Session(engine) as session:
+            # pydantic validation
+            desc_schema = DimDescriptionSchema(
+                text=description,
+                is_safe_content=(True if decision == "safe" else False)
+            )
+            
+            desc_row = DimDescription(**desc_schema.model_dump())
+            session.add(desc_row)
+            session.flush()
+            desc_id = desc_row.description_id
+            
+            # pydantic validation
+            llm_schema = LLMTrainingSchema(
+                reasoning=response,
+                moderation_decision=decision,
+                is_correct=None,
+                description_key=desc_id
+            )
+            
+            llm_row = LLMTraining(**llm_schema.model_dump())
+            session.add(llm_row)
+            session.commit()
+    except Exception as e:
+        print("DB logging failed:", e)
+        
     print("\nFinal Moderation Decision:", decision)
     return decision
 
 if __name__ == "__main__":
-    MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
+    MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
     
     my_tokenizer, my_model = initialize_nlp_pipeline(MODEL_NAME)
     
-    sample_description = "guys night out is epic"
+    description_text = "HerSpace is so cool. Love this app." # input a post description here!
+
+    clean_text = validate_and_sanitize(description_text)
     
     if my_tokenizer and my_model:
-        analyze_sentiment(my_tokenizer, my_model, sample_description)
+        moderation_decision = moderate_content(my_tokenizer, my_model, clean_text)

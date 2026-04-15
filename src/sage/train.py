@@ -1,4 +1,4 @@
-# done in Script mode in SageMaker Studio - matches the structure as classifyer
+# done in Script mode in SageMaker Studio - matches the structure as classifer
 # just showing in the repo, so it's there to go back to
 
 import argparse
