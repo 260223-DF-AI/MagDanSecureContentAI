@@ -90,9 +90,9 @@ class LLMTraining(Base):
     __tablename__ = "llm_training"
 
     llm_train_id = Column(Integer, primary_key=True, autoincrement=True)
-    output = Column(String, nullable=False)
+    reasoning = Column(String, nullable=False)
+    moderation_decision = Column(String, nullable=False)
     is_correct = Column(Boolean, nullable=True)
-    accuracy = Column(Float, nullable=True)
 
     # FK to description
     description_key = Column(Integer, ForeignKey("dim_description.description_id"), nullable=False)

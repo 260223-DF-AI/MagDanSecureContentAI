@@ -69,9 +69,9 @@ class LLMTrainingSchema(BaseModel):
     Output from text reasoning model
     """
     llm_train_id: int | None = None
-    output: str
+    reasoning: str
+    moderation_decision: str
     is_correct: bool | None = None
-    accuracy: float | None = None
     description_key: int
 
 
