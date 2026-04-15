@@ -8,8 +8,6 @@ import time
 import boto3
 import sagemaker
 from sagemaker.model import ModelPackage
-from dotenv import load_dotenv
-load_dotenv()
 
 AWS_REGION = os.getenv("AWS_REGION")
 MODEL_PACKAGE_ARN = os.getenv("MODEL_PACKAGE_ARN")
