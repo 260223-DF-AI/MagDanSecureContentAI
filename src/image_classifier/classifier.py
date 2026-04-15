@@ -8,10 +8,11 @@ from torchmetrics import Accuracy
 import pytorch_lightning as pl
 from torchvision import datasets, transforms, models
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from sqlalchemy.orm import Session 
-from src.models.orm_models import CNNTraining, CNNTrainingRun, DimImage
+from sqlalchemy.orm import Session
+from utils.audit_db.add_img_dataset_to_db import check_img_exists_in_db
+from src.models.orm_models import CNNTraining, CNNTrainingRun
 from src.models.instances import get_engine
-from src.models.schemas import CNNTrainingSchema, DimImageSchema
+from src.models.schemas import CNNTrainingSchema
 
 DATA_ROOT = 'utils/data/humans'
 TRAIN_DIR = os.path.join(DATA_ROOT, "training")
@@ -44,7 +45,7 @@ class ImageFolderWithPaths(datasets.ImageFolder):
         path = self.samples[index][0]  # image filepath
         return img, label, path
 
-train_dataset = datasets.ImageFolder(root=TRAIN_DIR, transform=data_transforms)
+train_dataset = ImageFolderWithPaths(root=TRAIN_DIR, transform=data_transforms)
 test_dataset = ImageFolderWithPaths(root=TEST_DIR, transform=data_transforms)
 
 print(f"Classes found: {train_dataset.classes}") # TODO: change to use logger
@@ -82,26 +83,39 @@ class HumanIdentificationModel(nn.Module):
         return x
 
 class LitClassifier(pl.LightningModule):
-    def __init__(self, model, run_id=None, imgs=None, lr=0.001):
+    def __init__(self, model, run_id=None, lr=0.001):
         super().__init__()
         self.model = model
         self.lr = lr
         self.loss_fn = nn.CrossEntropyLoss()
         self.val_accuracy = Accuracy(task='multiclass', num_classes=3)
         self.run_id = run_id
-        self.existing_imgs = imgs
         
-        # buffer for storing predictions each epoch
+        # buffers for storing predictions each epoch
+        self.training_outputs = []
         self.validation_outputs = []
     
     def forward(self, x, probability_flag=False):
         return self.model(x, probability_flag=probability_flag)
     
     def training_step(self, batch, batch_idx):
-        X, y = batch
+        X, y, paths = batch
         pred = self(X)
         loss = self.loss_fn(pred, y)
+        
+        # accuracy - gets confidence score for audit logs
+        prob = self(X, probability_flag=True)
+        confidence, predicted_class = torch.max(prob, dim=1)
+        
         self.log("train_loss", loss, on_step=True, on_epoch=True)
+        
+        self.training_outputs.append({
+            "pred": predicted_class.cpu(),
+            "conf": confidence.cpu(),
+            "y": y.cpu(),
+            "paths": paths
+        })
+        
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -130,13 +144,11 @@ class LitClassifier(pl.LightningModule):
     def on_validation_epoch_end(self):
         """Runs every epoch."""
         
-        try:
-            self._send_training_data_to_db()
-        except:
-            raise ConnectionError('Could not upload data to DB.')
+        self._send_training_data_to_db()
             
-        # clear buffer for next epoch
+        # clear buffers for next epoch
         self.validation_outputs.clear()
+        self.training_outputs.clear()
     
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0001)
@@ -153,96 +165,68 @@ class LitClassifier(pl.LightningModule):
             - AI confidence score: float
             - is_correct: bool
         """
-        idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()} # dictionary of class names and idxs
         
         with Session(engine) as session:
-            for batch in self.validation_outputs:
-                preds = batch["pred"]
-                confs = batch["conf"]
-                ys = batch["y"]
-                paths = batch["paths"]
+            try:
+                for v_batch in self.validation_outputs:
+                    self.__data_to_db_inner_loop(v_batch, session)
                 
-                for i in range(len(ys)):
-                    if preds[i] != ys[i]:
-                        file_path = paths[i]
-                        true_name = idx_to_class[int(ys[i].item())]
-                        pred_name = idx_to_class[int(preds[i].item())]
-                        confidence = float(confs[i].item())
-                        is_correct = true_name == pred_name
-
-                        # 1. Verify  image exists in dim_image table
-                        img_row = self.__check_img_exists_in_db(file_path, true_name, session) # adds new entry, in none exists
-
-                        # 2. Insert CNNTraining row
-                        cnn_schema = CNNTrainingSchema(
-                            confidence_score=confidence,
-                            predicted_class=str(pred_name),
-                            is_correct=is_correct,
-                            image_key=img_row.image_id,
-                            run_key=self.run_id
-                        ) # create object
-
-                        cnn_row = CNNTraining(**cnn_schema.model_dump()) # convert obj to ORM
-
-                        session.add(cnn_row)
-
-                # Commit all CNN rows at once
-                session.commit()
-                print("Successfully sent training data to db!") # TODO: switch to logger
+                for t_batch in self.training_outputs:
+                    self.__data_to_db_inner_loop(t_batch, session)
+                    
+                session.commit() # Commit all CNN rows per at once
                 
-    def __check_img_exists_in_db(self, file_path, name, session):
-        """Helper method to verify if an image exists in the dim _image table of DB.
+            except Exception as e:
+                session.rollback()
+                raise ConnectionError(f"DB commit failed: {e}")
+                
+        print("Successfully sent training data to db!\n") # TODO: switch to logger
+
+    def __data_to_db_inner_loop(self, batch, session):
+        """Private helper method to add entries to cnn_training table
 
         Args:
-            file_path (str): file_path to image
-            name (str): class/label of image
+            batch (dict): dictionary holding predictions, confidence scores, labels, and image paths
             session (Session): orm session for DML
-
-        Raises:
-            ValueError: if img_row not found or created raise error
-
-        Returns:
-            DimImage: the corresponding table row for the provided file_path
         """
-        img_row = None
-        if file_path not in self.existing_imgs:
-            # Create Pydantic schema
-            img_schema = DimImageSchema(
-                image_path=file_path,
-                label=str(name)
-            )
+        idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()} # dictionary of class names and idxs
 
-            # Convert to ORM
-            img_row = DimImage(**img_schema.model_dump())
-            session.add(img_row)
-            session.commit()
-            session.refresh(img_row)
-
-            # Add to in-memory set
-            self.existing_imgs.add(file_path)
-
-        else:
-            # Fetch existing image row
-            img_row = session.query(DimImage).filter_by(image_path=file_path).first()
+        preds = batch["pred"]
+        confs = batch["conf"]
+        ys = batch["y"]
+        paths = batch["paths"]
         
-        if not img_row: raise ValueError(f"An entry was not found and could not be made for: {file_path}")
-        
-        return img_row
+        for i in range(len(ys)):
+            file_path = paths[i]
+            true_name = idx_to_class[int(ys[i].item())]
+            pred_name = idx_to_class[int(preds[i].item())]
+            confidence = float(confs[i].item())
+            is_correct = true_name == pred_name
 
-def preload_existing_images(engine):
-    """Load all image paths from the DB into a fast lookup set."""
-    with Session(engine) as session:
-        rows = session.query(DimImage.image_path).all()
-        return {row[0] for row in rows}
-    
-def train_model(train_loader, test_loader, run_id: int, existing_imgs: set):
+            # 1. Verify  image exists in dim_image table
+            img_row = check_img_exists_in_db(file_path, true_name, session) # adds new entry, in none exists
+
+            # 2. Insert CNNTraining row
+            cnn_schema = CNNTrainingSchema(
+                confidence_score=confidence,
+                predicted_class=str(pred_name),
+                is_correct=is_correct,
+                image_key=img_row.image_id,
+                run_key=self.run_id
+            ) # create object
+
+            cnn_row = CNNTraining(**cnn_schema.model_dump()) # convert obj to ORM
+
+            session.add(cnn_row)
+
+def train_model(train_loader, test_loader, run_id: int):
     model = HumanIdentificationModel()    
-    lit_model = LitClassifier(model, run_id, existing_imgs)
+    lit_model = LitClassifier(model, run_id)
     print(lit_model)
     
     early_stop = EarlyStopping(
         monitor='val_loss',
-        patience=2,
+        patience=1,
         mode='min'
     )
     
@@ -257,12 +241,12 @@ def train_model(train_loader, test_loader, run_id: int, existing_imgs: set):
     # To use mixed precision (AMP), change precision=32 → precision=16
     # AND set accelerator="gpu" on a CUDA-capable system.
     trainer = pl.Trainer(
-        max_epochs=2,
+        max_epochs=100,
         precision=32, # switch to 16 to enable AMP on GPU
         accelerator='auto',
         callbacks=[early_stop, checkpoint],
         log_every_n_steps=1,
-        limit_train_batches=200,
+        limit_train_batches=400,
         num_sanity_val_steps=0
     )
     
@@ -270,8 +254,6 @@ def train_model(train_loader, test_loader, run_id: int, existing_imgs: set):
     return lit_model
 
 def main():
-    existing_imgs = preload_existing_images(engine) # saves dim_image file paths to local memory for quick verification
-
     # log training session to db
     # adds new row to cnn_training_runs table
     with Session(engine) as session:
@@ -281,7 +263,7 @@ def main():
         session.refresh(run)
         training_run_id = run.run_id # used as FK in cnn_training table
     
-    train_model(train_loader, test_loader, training_run_id, existing_imgs)
+    train_model(train_loader, test_loader, training_run_id)
     print("\nTraining complete! Run 'tensorboard --logdir lightning_logs/' to view.")
 
 if __name__ == "__main__":

@@ -3,14 +3,18 @@ from sqlalchemy.orm import declarative_base
 from src.models.instances import get_engine
 
 Base = declarative_base()
-# TODO: remove accuracy from erd.png; add training_runs
-## change vars to label, predicted_class
+# TODO: 
+# add grains to table, scd DocStrings
 
 # =========================
 # Dimension Tables
 # =========================
 
 class DimUser(Base):
+    """
+    Grain: Each row represents a unique user.
+    SCD: Type 1 - Overwrites existing data when changes occur.
+    """
     __tablename__ = "dim_user"
 
     user_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -20,6 +24,10 @@ class DimUser(Base):
 
 
 class DimImage(Base):
+    """
+    Grain: Each row represents a unique image.
+    SCD: Type 1 - Overwrites existing data when changes occur.
+    """
     __tablename__ = "dim_image"
 
     image_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -28,18 +36,26 @@ class DimImage(Base):
 
 
 class DimDescription(Base):
+    """
+    Grain: Each row represents a unique description.
+    SCD: Type 1 - Overwrites existing data when changes occur.
+    """
     __tablename__ = "dim_description"
 
     description_id = Column(Integer, primary_key=True, autoincrement=True)
     text = Column(String, nullable=False)
-    is_safe_content = Column(Boolean, nullable=False)
+    is_safe_content = Column(Boolean, nullable=True)
 
 
 class DimPost(Base):
+    """
+    Grain: Each row represents a unique post.
+    SCD: Type 1 - Overwrites existing data when changes occur.
+    """
     __tablename__ = "dim_post"
 
     post_id = Column(Integer, primary_key=True, autoincrement=True)
-    status = Column(String, nullable=False)
+    status = Column(String, nullable=True)
 
     # Foreign keys
     user_key = Column(Integer, ForeignKey("dim_user.user_id"), nullable=False)
@@ -53,7 +69,7 @@ class DimPost(Base):
 
 class CNNTraining(Base):
     """
-    Grain: Each row represents one image classified by the CNN_model in a given validation stage of a training session.
+    Grain: Each row represents one image classified by the CNN_model in a training session.
     """
     __tablename__ = "cnn_training"
 
@@ -68,23 +84,32 @@ class CNNTraining(Base):
 
 
 class LLMTraining(Base):
+    """
+    Grain: Each row represents one description processed by the LLM model in a training session.
+    """
     __tablename__ = "llm_training"
 
     llm_train_id = Column(Integer, primary_key=True, autoincrement=True)
-    output = Column(String, nullable=False)
+    reasoning = Column(String, nullable=False)
+    moderation_decision = Column(String, nullable=False)
     is_correct = Column(Boolean, nullable=True)
-    accuracy = Column(Float, nullable=True)
 
     # FK to description
     description_key = Column(Integer, ForeignKey("dim_description.description_id"), nullable=False)
     
 class CNNTrainingRun(Base):
+    """
+    Grain: Each row represents a unique training run of the CNN model.
+    """
     __tablename__ = "cnn_training_runs"
 
     run_id = Column(Integer, primary_key=True, autoincrement=True)
     started_at  = Column(DateTime, server_default=func.now())
 
 class FinalModelLog(Base):
+    """
+    Grain: Each row represents the output of the final model for a given post.
+    """
     __tablename__ = "final_model_logs"
 
     log_id = Column(Integer, primary_key=True, autoincrement=True)

@@ -31,7 +31,7 @@ class DimDescriptionSchema(BaseModel):
     """
     description_id: int | None = None
     text: str
-    is_safe_content: bool
+    is_safe_content: bool | None = None
 
 
 class DimPostSchema(BaseModel):
@@ -40,7 +40,7 @@ class DimPostSchema(BaseModel):
     (joins user, image, description)
     """
     post_id: int | None = None
-    status: str
+    status: str | None = None
     user_key: int
     image_key: int
     description_key: int
@@ -69,9 +69,9 @@ class LLMTrainingSchema(BaseModel):
     Output from text reasoning model
     """
     llm_train_id: int | None = None
-    output: str
+    reasoning: str
+    moderation_decision: str
     is_correct: bool | None = None
-    accuracy: float | None = None
     description_key: int
 
 
@@ -107,3 +107,4 @@ class AnalyzePostResponse(BaseModel):
     final_model_log: FinalModelLogsSchema
     # Debug / explainability trace (ReAct reasoning)
     trace: dict
+    

@@ -3,3 +3,4 @@
 .env
 __pycache__/
 *.pyc
+training_db_setup.sql
