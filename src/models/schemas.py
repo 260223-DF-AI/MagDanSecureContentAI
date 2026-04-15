@@ -100,6 +100,12 @@ class VisionResult(BaseModel):
     is_post_allowed: bool
     reason: str
 
+class LLMResult(BaseModel):
+    moderation_label: str
+    is_comment_allowed: bool
+    reason: str
+    suggested_response: str
+
 # =========================
 # Final API Response
 # =========================
@@ -110,20 +116,11 @@ class AnalyzeResponse(BaseModel):
 
     This is what /analyze returns.
     """
-    user: DimUserSchema
-    image: DimImageSchema
-    description: DimDescriptionSchema
-    post: DimPostSchema
-    cnn_training: CNNTrainingSchema
-    llm_training: LLMTrainingSchema
-    final_model_log: FinalModelLogsSchema
-    # Debug / explainability trace (ReAct reasoning)
-    trace: dict
     filename: str
     content_type: str
     input_text: str
     vision: VisionResult
+    llm: LLMResult
     final_decision: str
     is_allowed: bool
     reasoning: dict[str, Any]
-    
