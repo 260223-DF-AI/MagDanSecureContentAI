@@ -1,0 +1,31 @@
+{
+  "name": "magdansecurecontentai",
+  "version": "1.0.0",
+  "description": "A social media platform made by women for women, only postings with woman.  The social media platform uses an AI tool to detect the gender trying to access the platform and the gender being posted.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/260223-DF-AI/MagDanSecureContentAI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/260223-DF-AI/MagDanSecureContentAI/issues"
+  },
+  "homepage": "https://github.com/260223-DF-AI/MagDanSecureContentAI#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
+  }
+}
