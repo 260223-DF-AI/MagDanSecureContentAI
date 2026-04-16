@@ -1,4 +1,4 @@
-# this is the model that is like "classifiyer.py"
+# this is the model that is like "classifier.py"
 # or more specifically, the image classifier model.
 # it is stored in the SageMaker Registry, this program is to deploy it
 # for use in the SageMaker endpoint, and FastAPI

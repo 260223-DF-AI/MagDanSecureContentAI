@@ -3,9 +3,6 @@ from sqlalchemy.orm import declarative_base
 from src.models.instances import get_engine
 
 Base = declarative_base()
-# TODO: 
-# add grains to table, scd DocStrings
-
 # =========================
 # Dimension Tables
 # =========================
