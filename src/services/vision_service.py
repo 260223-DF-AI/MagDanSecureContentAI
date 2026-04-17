@@ -7,6 +7,9 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 from src.core.settings import settings
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # invokes SageMaker endpoint directly for the vision/image classifier
 class VisionService:
     """

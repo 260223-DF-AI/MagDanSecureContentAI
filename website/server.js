@@ -12,6 +12,7 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname)));
 
 // serve frontend files
 app.use(express.static(path.join(__dirname, "public")));
@@ -94,6 +95,61 @@ app.post("/login", async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error." });
+  }
+});
+
+// =========================
+// GET POSTS FROM DATABASE
+// =========================
+app.get("/posts", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.post_id,
+        p.status,
+        p."user_key" AS user_id,
+        p.image_key,
+        p.description_key,
+
+        d."text" AS description_text,
+        d.is_safe_content,
+
+        u."username",
+        u.num_of_posts,
+        u.num_of_violations,
+
+        i.image_path,
+        i.label
+
+      FROM dim_post AS p
+      INNER JOIN dim_user AS u
+        ON p."user_key" = u."user_id"
+      INNER JOIN dim_description AS d
+        ON p.description_key = d.description_id
+      INNER JOIN dim_image i
+        ON p.image_key= i.image_id
+      ORDER BY p.post_id DESC;
+    `);
+
+    const posts = result.rows.map((row) => ({
+      id: row.post_id,
+      status: row.status,
+      user_id: row.user_id,
+      image: row.image,
+      image_path: row.image_path,
+      label: row.label,
+      description_key: row.description_key,
+      description_text: row.description_text,
+      is_safe_content: row.is_safe_content,
+      username: row.username,
+      num_of_posts: row.num_of_posts,
+      num_of_violations: row.num_of_violations,
+    }));
+
+    res.json({ posts });
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ message: "Failed to fetch posts" });
   }
 });
 
