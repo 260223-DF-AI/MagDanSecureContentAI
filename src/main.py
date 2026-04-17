@@ -1,5 +1,6 @@
 from typing import Annotated
-
+import psycopg2
+import os
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from src.models.schemas import AnalyzeResponse
@@ -7,6 +8,15 @@ from src.services.vision_service import VisionService
 from src.services.llm_service import LLMService
 from dotenv import load_dotenv
 load_dotenv()
+
+def get_db_connection():
+    return psycopg2.connect(
+        dbname=os.getenv("magdan"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("5432"),
+    )
 
 app = FastAPI(
     title="SecureContent AI",
