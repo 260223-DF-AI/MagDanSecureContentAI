@@ -15,11 +15,11 @@ load_dotenv()
 
 def get_db_connection():
     return psycopg2.connect(
-        dbname=os.getenv("magdan"),
+        dbname=os.getenv("DB_NAME"),
         user=os.getenv("DB_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
         host=os.getenv("DB_HOST"),
-        port=os.getenv("5432"),
+        port=os.getenv("DB_PORT"),
         cursor_factory=RealDictCursor,
     )
 
@@ -119,12 +119,15 @@ async def health() -> dict[str, str]:
 # verify button in the feed 
 @app.get("/verify/{post_id}", response_class=HTMLResponse)
 async def verify_post(post_id: int):
-    post = get_post_by_id(post_id)
-
-    if not post:
-        raise HTTPException(status_code=404, detail="Post not found.")
-
     try:
+        post = get_post_by_id(post_id)
+        if not post:
+          raise HTTPException(status_code=404, detail="Post not found.")
+        
+        image_path = post["image_path"]
+        if not image_path:
+            raise HTTPException(status_code=400, detail="Post has no image path")
+
         image_file = resolve_image_file(post["image_path"])
         content_type, _ = mimetypes.guess_type(str(image_file))
         content_type = content_type or "image/jpeg"
