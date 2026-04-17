@@ -82,6 +82,6 @@ def load_users_from_directory(root_dir: str, engine: Engine) -> None: # type: ig
 if __name__ == "__main__":
     try: 
         load_users_from_directory(BASE_DIR, engine)
-        print(f"User have been added successfully to DB!") # TODO: change this to a logger
+        print(f"User have been added successfully to DB!")
     except Exception as e:
         raise ConnectionError(f"Unable to add user data from /users in DB: {e}")

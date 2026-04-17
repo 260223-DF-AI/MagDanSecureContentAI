@@ -123,4 +123,4 @@ class FinalModelLog(Base):
 if __name__ == "__main__":
     engine = get_engine()
     Base.metadata.create_all(engine) # adds all tables to db
-    print(f"Created tables in database: {Base.metadata.tables.keys()}") # TODO: change this to a logger
+    print(f"Created tables in database: {Base.metadata.tables.keys()}")

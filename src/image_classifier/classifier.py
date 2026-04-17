@@ -20,7 +20,7 @@ TEST_DIR = os.path.join(DATA_ROOT, "test")
 engine = get_engine() # used for DB logging
 
 if not os.path.exists(TRAIN_DIR):
-    print(f"ERROR: Dataset directory '{TRAIN_DIR}' not found.") # TODO: change to logger
+    print(f"ERROR: Dataset directory '{TRAIN_DIR}' not found.")
     print("Please ensure the 'utils/data/humans' folder is extracted in the script's directory.")
     sys.exit(1)
 
@@ -48,7 +48,7 @@ class ImageFolderWithPaths(datasets.ImageFolder):
 train_dataset = ImageFolderWithPaths(root=TRAIN_DIR, transform=data_transforms)
 test_dataset = ImageFolderWithPaths(root=TEST_DIR, transform=data_transforms)
 
-print(f"Classes found: {train_dataset.classes}") # TODO: change to use logger
+print(f"Classes found: {train_dataset.classes}")
 print(f"Total training images available: {len(train_dataset)}")
 
 BATCH_SIZE = 4
@@ -180,7 +180,7 @@ class LitClassifier(pl.LightningModule):
                 session.rollback()
                 raise ConnectionError(f"DB commit failed: {e}")
                 
-        print("Successfully sent training data to db!\n") # TODO: switch to logger
+        print("Successfully sent training data to db!\n")
 
     def __data_to_db_inner_loop(self, batch, session):
         """Private helper method to add entries to cnn_training table
