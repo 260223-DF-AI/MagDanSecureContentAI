@@ -74,10 +74,6 @@ class LLMTrainingSchema(BaseModel):
     moderation_decision: str
     is_correct: bool | None = None
     description_key: int
-    moderation_label: str
-    is_comment_allowed: bool
-    reason: str
-    suggested_response: str
 
 
 class FinalModelLogsSchema(BaseModel):
