@@ -1,0 +1,24 @@
+{
+  "posts": [
+    {
+      "id": 1,
+      "image": "i1.jpg",
+      "text": "Anyone else have a case of the mondays :p"
+    },
+    {
+      "id": 2,
+      "image": "i2.jpg",
+      "text": "Paul Bettany spotted at The Spot, enjoying a boys night out"
+    },
+    {
+      "id": 3,
+      "image": "i3.jpg",
+      "text": "oh to be a gal and a male-presenting humanoid android swinging in a swing set My man my man my man <3"
+    },
+    {
+      "id": 4,
+      "image": "i4.jpg",
+      "text": "new home, new life, new me #girlbossthings"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "posts": [
+    {
+      "id": 8,
+      "image": "i1.jpg",
+      "text": "Sunday brunch with my girls! #GirlsDay"
+    },
+    {
+      "id": 9,
+      "image": "i2.jpg",
+      "text": "Birthday celebrations! So grateful for this group."
+    },
+    {
+      "id": 10,
+      "image": "i3.jpg",
+      "text": "Guys night out, taken by my boyfriend!"
+    },
+    {
+      "id": 11,
+      "image": "i4.jpg",
+      "text": "Rest day: journaling, matcha, and a little sunshine"
+    }
+  ]
+}
