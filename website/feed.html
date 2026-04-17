@@ -31,8 +31,38 @@
 
       <section class="stories-row">
         <div class="story-card add-story">
-          <div class="story-avatar">+</div>
-          <span>Create Story</span>
+          <script>
+          async function loadPosts() {
+            const response = await fetch("http://127.0.0.1:8000/posts");
+            const data = await response.json();
+            const container = document.querySelector(".feed-main");
+            data.posts.forEach(post => {
+              const postHTML = `
+              <section class="post-card">
+                <div class="post-header">
+                  <div class="post-user">
+                    <div class="post-avatar"></div>
+                      <div>
+                       <h3>${post.username}</h3>
+                        <p>${post.created_at}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="post-text">${post.content}</p>
+                  <div class="post-actions">
+                    <button>Like</button>
+                    <button>Comment</button>
+                    <button>Share</button>
+                    <a href="http://127.0.0.1:8000/verify/${post.id}" class="verify-btn">Verify</a>
+                  </div>
+                  </section>
+                </div>
+                `;
+                container.innerHTML += postHTML;
+              });
+            }
+            loadPosts();
+          </script>
         </div>
       </section>
     </main>
