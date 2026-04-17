@@ -103,7 +103,7 @@ if __name__ == "__main__":
     
     my_tokenizer, my_model = initialize_nlp_pipeline(MODEL_NAME)
     
-    description_text = "HerSpace is so cool. Love this app." # input a post description here!
+    description_text = "Guys night out, taken by my boyfriend!" # input a post description here!
 
     clean_text = validate_and_sanitize(description_text)
     

@@ -1,65 +1,66 @@
-<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Her Space | Feed</title>
-  <link rel="stylesheet" href="feed.css" />
-</head>
-<body>
-  <div class="feed-page">
-    <aside class="sidebar left-sidebar">
-      <a href="index.html" class="brand-block">
-        <img src="images/herSpaceLogo.png" alt="Her Space icon" class="brand-icon" />
-      </a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Her Space | Feed</title>
+    <link rel="stylesheet" href="feed.css" />
+  </head>
+  <body>
+    <div class="feed-page">
+      <aside class="sidebar left-sidebar">
+        <a href="index.html" class="brand-block">
+          <img
+            src="images/herSpaceLogo.png"
+            alt="Her Space icon"
+            class="brand-icon"
+          />
+        </a>
 
-      <nav class="side-nav">
-        <a href="#" class="side-link active">Home</a>
-        <a href="#" class="side-link">Profile</a>
-        <a href="#" class="side-link">Notifications</a>
-      </nav>
+        <nav class="side-nav">
+          <a href="#" class="side-link active">Home</a>
+          <a href="#" class="side-link">Profile</a>
+          <a href="#" class="side-link">Notifications</a>
+        </nav>
 
-      <button class="create-post-btn">+ Create Post</button>
-    </aside>
+        <button class="create-post-btn">+ Create Post</button>
+      </aside>
 
-    <main class="feed-main">
-      <header class="feed-topbar">
-        <div class="top-actions">
-          <button class="top-chip">Following</button>
-          <button class="top-chip filled">Explore</button>
-        </div>
-      </header>
+      <main class="feed-main">
+        <header class="feed-topbar">
+          <div class="top-actions">
+            <button class="top-chip">Following</button>
+            <button class="top-chip filled">Explore</button>
+          </div>
+        </header>
 
-      <section class="stories-row">
-        <div class="story-card add-story">
-        </div>
-      </section>
+        <section class="stories-row">
+          <div class="story-card add-story"></div>
+        </section>
 
-      <!-- Posts will load here -->
-      <div id="posts-container"></div>
-    </main>
-  </div>
-
-  <script>
-    async function loadLocalFeed() {
+        <!-- Posts will load here -->
+        <div id="posts-container"></div>
+      </main>
+    </div>
+    <script>
+      async function loadLocalFeed() {
         const users = ["@ava.living", "@emma_williams", "@wandavision_fanpage"];
- 
+
         const container = document.getElementById("posts-container");
- 
+
         for (const user of users) {
           const basePath = `users/${user}`;
           const descPath = `${basePath}/post_descriptions.json`;
- 
+
           try {
             const descRes = await fetch(descPath);
             const descData = await descRes.json();
- 
+
             const posts = descData.posts; // array of { image: "i1.jpg", text: "..." }
- 
+
             posts.forEach((post) => {
               const imageURL = `${basePath}/${post.image}`;
               const avatarURL = `${basePath}/pfp.jpg`;
- 
+
               const postHTML = `
           <section class="post-card">
             <div class="post-user">
@@ -68,10 +69,10 @@
                 <h3>${user}</h3>
               </div>
             </div>
- 
+
             <p class="post-text">${post.text}</p>
             <img src="${imageURL}" class="post-image" />
- 
+
             <div class="post-actions">
               <button>Like</button>
               <button>Comment</button>
@@ -80,7 +81,6 @@
             </div>
           </section>
         `;
- 
               container.innerHTML += postHTML;
             });
           } catch (err) {
@@ -88,8 +88,8 @@
           }
         }
       }
- 
+
       loadLocalFeed();
-  </script>
-</body>
+    </script>
+  </body>
 </html>

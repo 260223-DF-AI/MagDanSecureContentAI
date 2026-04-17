@@ -120,7 +120,6 @@ class LitClassifier(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         """Runs once per batch."""
-        
         X, y, paths = batch
         pred = self(X)
         loss = self.loss_fn(pred, y)
