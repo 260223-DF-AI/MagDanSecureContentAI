@@ -38,6 +38,7 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+# to "create a post" - to import and image and type in a description string for it to analyze
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_content(
     file: Annotated[UploadFile, File(...)],
@@ -103,3 +104,40 @@ async def analyze_content(
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Analyze failed: {exc}") from exc
+    
+# to pull posts from the db into the feed.html page, and have them analyzed
+@app.get("/posts")
+async def get_posts():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT 
+                p.id,
+                p.content,
+                p.created_at,
+                u.username
+            FROM dim_post p
+            JOIN dim_user u ON p.user_id = u.id
+            ORDER BY p.created_at DESC
+        """)
+
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        posts = []
+        for row in rows:
+            posts.append({
+                "id": row[0],
+                "content": row[1],
+                "created_at": str(row[2]),
+                "username": row[3],
+            })
+
+        return {"posts": posts}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
