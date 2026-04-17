@@ -41,61 +41,55 @@
   </div>
 
   <script>
-    async function loadPosts() {
-      try {
-        const response = await fetch("http://localhost:3000/posts");
-        const data = await response.json();
-
-        console.log("Posts response:", data);
-
+    async function loadLocalFeed() {
+        const users = ["@ava.living", "@emma_williams", "@wandavision_fanpage"];
+ 
         const container = document.getElementById("posts-container");
-        container.innerHTML = "";
-
-        if (!data.posts || data.posts.length === 0) {
-          container.innerHTML = "<p>No posts found.</p>";
-          return;
+ 
+        for (const user of users) {
+          const basePath = `users/${user}`;
+          const descPath = `${basePath}/post_descriptions.json`;
+ 
+          try {
+            const descRes = await fetch(descPath);
+            const descData = await descRes.json();
+ 
+            const posts = descData.posts; // array of { image: "i1.jpg", text: "..." }
+ 
+            posts.forEach((post) => {
+              const imageURL = `${basePath}/${post.image}`;
+              const avatarURL = `${basePath}/pfp.jpg`;
+ 
+              const postHTML = `
+          <section class="post-card">
+            <div class="post-user">
+              <div class="post-avatar" style="background-image:url('${avatarURL}')"></div>
+              <div>
+                <h3>${user}</h3>
+              </div>
+            </div>
+ 
+            <p class="post-text">${post.text}</p>
+            <img src="${imageURL}" class="post-image" />
+ 
+            <div class="post-actions">
+              <button>Like</button>
+              <button>Comment</button>
+              <button>Share</button>
+              <a href="http://127.0.0.1:8000/verify/${post.id}" class="verify-btn">Verify</a>
+            </div>
+          </section>
+        `;
+ 
+              container.innerHTML += postHTML;
+            });
+          } catch (err) {
+            console.error(`Failed to load ${descPath}`, err);
+          }
         }
-
-        data.posts.forEach(post => {
-          const safeLabel = post.is_safe_content ? "Safe" : "Flagged";
-
-          const postHTML = `
-            <section class="post-card">
-              <div class="post-header">
-                <div class="post-user">
-                  <div class="post-avatar"></div>
-                  <div>
-                    <h3>${post.username}</h3>
-                    <p>Status: ${post.status}</p>
-                  </div>
-                </div>
-              </div>
-
-              <p class="post-text">${post.description_text}</p>
-              <img src="${post.image_path}" class="post-image" />
-
-              <div class="post-meta">
-                <p>Safety: ${safeLabel}</p>
-                <p>Image Reference: ${post.image}</p>
-              </div>
-
-              <div class="post-actions">
-                <button>Like</button>
-                <button>Comment</button>
-                <button>Share</button>
-                <a href="http://127.0.0.1:8000/verify/${post.id}" class="verify-btn">Verify</a>
-              </div>
-            </section>
-          `;
-
-          container.innerHTML += postHTML;
-        });
-      } catch (error) {
-        console.error("Error loading posts:", error);
       }
-    }
-
-    loadPosts();
+ 
+      loadLocalFeed();
   </script>
 </body>
 </html>

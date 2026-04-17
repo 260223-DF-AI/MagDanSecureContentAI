@@ -1,0 +1,7 @@
+{
+  "posts": [
+    { "id": 5, "image": "i1.jpg", "text": "working on a new project this morning!" },
+    { "id": 6, "image": "i2.jpg", "text": "brunch with friends today!" },
+    { "id": 7, "image": "i3.jpg", "text": "I hate how things turned out today. I might just want to hurt myself." }
+  ]
+}

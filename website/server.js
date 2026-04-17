@@ -106,7 +106,6 @@ app.get("/posts", async (req, res) => {
     const result = await pool.query(`
       SELECT
         p.post_id,
-        p.status,
         p."user_key" AS user_id,
         p.image_key,
         p.description_key,
