@@ -43,9 +43,6 @@ class LLMService:
 
         return (
             f"{DEFAULT_POLICY}\n\n"
-            f"Image moderation context:\n"
-            f"- predicted_class: {predicted_class}\n"
-            f"- image_allowed: {image_allowed}\n\n"
             f"Post description:\n{text}\n\n"
             f"Return JSON only in this format:\n"
             f'{{"reasoning": "short explanation", "decision": "safe" or "unsafe"}}'
