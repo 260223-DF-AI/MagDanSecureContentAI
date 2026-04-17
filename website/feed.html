@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Her Space | Feed</title>
+  <link rel="stylesheet" href="feed.css" />
+</head>
+<body>
+  <div class="feed-page">
+    <aside class="sidebar left-sidebar">
+      <a href="index.html" class="brand-block">
+        <img src="images/herSpaceLogo.png" alt="Her Space icon" class="brand-icon" />
+      </a>
+
+      <nav class="side-nav">
+        <a href="#" class="side-link active">Home</a>
+        <a href="#" class="side-link">Profile</a>
+        <a href="#" class="side-link">Notifications</a>
+      </nav>
+
+      <button class="create-post-btn">+ Create Post</button>
+    </aside>
+
+    <main class="feed-main">
+      <header class="feed-topbar">
+        <div class="top-actions">
+          <button class="top-chip">Following</button>
+          <button class="top-chip filled">Explore</button>
+        </div>
+      </header>
+
+      <section class="stories-row">
+        <div class="story-card add-story">
+        </div>
+      </section>
+
+      <!-- Posts will load here -->
+      <div id="posts-container"></div>
+    </main>
+  </div>
+
+  <script>
+    async function loadPosts() {
+      try {
+        const response = await fetch("http://localhost:3000/posts");
+        const data = await response.json();
+
+        console.log("Posts response:", data);
+
+        const container = document.getElementById("posts-container");
+        container.innerHTML = "";
+
+        if (!data.posts || data.posts.length === 0) {
+          container.innerHTML = "<p>No posts found.</p>";
+          return;
+        }
+
+        data.posts.forEach(post => {
+          const safeLabel = post.is_safe_content ? "Safe" : "Flagged";
+
+          const postHTML = `
+            <section class="post-card">
+              <div class="post-header">
+                <div class="post-user">
+                  <div class="post-avatar"></div>
+                  <div>
+                    <h3>${post.username}</h3>
+                    <p>Status: ${post.status}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p class="post-text">${post.description_text}</p>
+              <img src="${post.image_path}" class="post-image" />
+
+              <div class="post-meta">
+                <p>Safety: ${safeLabel}</p>
+                <p>Image Reference: ${post.image}</p>
+              </div>
+
+              <div class="post-actions">
+                <button>Like</button>
+                <button>Comment</button>
+                <button>Share</button>
+                <a href="http://127.0.0.1:8000/verify/${post.id}" class="verify-btn">Verify</a>
+              </div>
+            </section>
+          `;
+
+          container.innerHTML += postHTML;
+        });
+      } catch (error) {
+        console.error("Error loading posts:", error);
+      }
+    }
+
+    loadPosts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Her Space | Log In</title>
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+  <div class="login-page">
+    <div class="background-overlay"></div>
+
+    <div class="login-wrapper">
+        <div class="back-container">
+            <a href="index.html" class="back-button">← Back</a>
+        </div>
+      <div class="login-card">
+        <div class="logo-area">
+          <img src="images/herSpaceLogo.png" alt="Her Space Icon" class="logo-icon" />
+          <!-- <img src="images/herSpaceTitle.png" alt="Her Space" class="logo-title" /> -->
+        </div>
+
+        <p class="login-tagline">A beautiful space to connect, create, and share.</p>
+
+        <form class="login-form" id="loginForm">
+          <div class="input-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Enter your username" />
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" />
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-login">Log In</button>
+            <button type="button" class="btn btn-create" onclick = "window.location.href = 'create-account.html'">Create Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+  const loginForm = document.getElementById("loginForm");
+
+  loginForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch("/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(data.message);
+      window.location.href = "feed.html";
+    } else {
+      alert(data.message);
+    }
+  });
+</script>
+</body>
+</html>

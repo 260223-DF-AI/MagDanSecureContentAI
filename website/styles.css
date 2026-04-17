@@ -1,0 +1,142 @@
+:root {
+  --pink-100: #fff4fa;
+  --pink-200: #ffd7ea;
+  --pink-300: #ffb6d6;
+  --pink-400: #ff8fc0;
+  --pink-500: #f25da8;
+  --pink-600: #de3b92;
+  --purple-100: #f7ecff;
+  --purple-200: #e8d2ff;
+  --text-dark: #522742;
+  --text-soft: #7b4b68;
+  --white: #ffffff;
+  --shadow: 0 20px 60px rgba(222, 59, 146, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-dark);
+  background-image: url("images/herSpaceBack.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  padding: 10px;
+}
+
+.logo {
+    width: 250px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 1px;
+}
+
+.title-container {
+  display: flex;
+  justify-content: center;   /* horizontal center */
+  align-items: center;
+  width: 100%;
+  margin: 20px 0;
+}
+
+.title {
+  max-width: 900px;   /* controls size */
+  width: 100%;
+  height: auto;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    font-weight: 700;
+}
+
+.nav-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.8);
+    padding: 12px 28px;
+    border-radius: 999px;
+    box-shadow: 0 8px 25px rgba(242,93,168,0.15);
+    border: 1px solid rgba(242,93,168,0.15);
+}
+
+/* pretty text styling */
+.nav-links a {
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--pink-600);
+    position: relative;
+    transition: all 0.25s ease;
+}
+
+/* the bounce effect in the navigation bar */
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+/* hover glow */
+.nav-links a:hover {
+  transform: translateY(-5px);
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  margin-top: 30px;
+  padding: 50px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 30px;
+}
+
+.hero-copy {
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.shape-left {
+  width: 280px;
+  height: 280px;
+  top: -70px;
+  left: -70px;
+  background: linear-gradient(135deg, var(--pink-300), var(--pink-500));
+  opacity: 0.45;
+}
+
+.shape-right {
+  width: 420px;
+  height: 420px;
+  right: -170px;
+  top: 90px;
+  background: repeating-radial-gradient(circle, rgba(242, 93, 168, 0.16) 0 12px, rgba(242, 93, 168, 0.05) 12px 24px);
+}
+
+.container {
+  position: relative;
+}

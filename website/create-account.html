@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Her Space | Create Account</title>
+  <link rel="stylesheet" href="create-account.css" />
+</head>
+<body>
+  <div class="signup-page">
+    <div class="background-overlay"></div>
+
+    <div class="signup-wrapper">
+      <div class="back-container">
+        <a href="login.html" class="back-button">← Back</a>
+      </div>
+
+      <div class="signup-card">
+        <div class="logo-area">
+          <img src="images/herSpaceLogo.png" alt="Her Space Icon" class="logo-icon" />
+        </div>
+
+        <p class="signup-tagline">Create your account and step into your space.</p>
+
+        <form class="signup-form" id="signupForm">
+          <div class="input-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Create a username"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Create a password"
+              required
+            />
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-submit">Submit</button>
+            <button
+              type="button"
+              class="btn btn-cancel"
+              onclick="window.location.href='login.html'"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+  const signupForm = document.getElementById("signupForm");
+
+  signupForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch("/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, email, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(data.message);
+      window.location.href = "feed.html";
+    } else {
+      alert(data.message);
+    }
+  });
+</script>
+</body>
+</html>
