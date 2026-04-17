@@ -1,0 +1,69 @@
+<!-- this is the 'Clara' page for Her Space social media platform-->
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width = device-width, initial-scale = 1.0" />
+    <title>HER SPACE</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+
+  <body>
+    <div class="page">
+      <div class="shape shape-left"></div>
+      <div class="shape shape-right"></div>
+      <div class="container">
+        <nav class="navbar">
+          <div class="brand">
+            <img
+              src="../images/herSpaceLogo.png"
+              alt="Her Space Logo"
+              class="logo"
+            />
+            <div class="title-container">
+              <img
+                src="../images/herSpaceTitle.png"
+                alt="Her Space Title"
+                class="title"
+              />
+            </div>
+          </div>
+          <!-- end of brand class that contains the logo and title -->
+          <div class="nav-links">
+            <a href="../index.html">Home</a>
+            <a class="btn btn-primary" href="../about.html">About</a>
+            <a class="btn btn-primary" href="../login.html"> LOG IN</a>
+          </div>
+        </nav>
+        <!-- end of main navigation bar that sits at the top -->
+
+        <section class="box">
+          <h1>Clara</h1>
+          <br />
+          <p>
+            Clara is our AI image content moderator. It utilizes the pretrained
+            ResNet18 model from Pytorch and classifies images into three groups:
+          </p>
+          <ul style="margin-left: 40">
+            <li>women</li>
+            <li>men</li>
+            <li>groups of people</li>
+          </ul>
+          <br />
+          Due to our polices at Her Space, images classified by Clara as "men"
+          are flagged for further review.
+
+          <div id="image-group">
+            <img src="../images/woman.png">
+            <img src="../images/group.png">
+            <img src="../images/man.png">
+          </div>
+        </section>
+        <!-- end of hero section -->
+      </div>
+      <!-- end of container -->
+    </div>
+    <!-- end of page -->
+  </body>
+  <!-- end of body of the website -->
+</html>

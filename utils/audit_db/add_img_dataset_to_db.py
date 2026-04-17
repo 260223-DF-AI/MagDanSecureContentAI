@@ -68,7 +68,7 @@ def check_img_exists_in_db(file_path: str, name: str, session: Session) -> DimIm
 
         # Add to in-memory set
         existing_imgs.add(file_path)
-        print(f"New image added to DB: {file_path}") #TODO: logger
+        print(f"New image added to DB: {file_path}")
 
     else:
         # Fetch existing image row
@@ -82,6 +82,6 @@ def check_img_exists_in_db(file_path: str, name: str, session: Session) -> DimIm
 if __name__ == "__main__":
     try: 
         load_images_from_directory(BASE_DIR, engine)
-        print(f"Images have been added successfully to DB!") # TODO: change this to a logger
+        print(f"Images have been added successfully to DB!")
     except:
         raise ConnectionError("Unable to add images to dim_images table in DB.")

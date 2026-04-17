@@ -88,6 +88,17 @@ body {
     transition: all 0.25s ease;
 }
 
+a {
+  color: var(--pink-500);
+}
+a:visited {
+  color: var( --text-soft);
+}
+a:hover {
+  color: var(--pink-600);
+  transform: translateY(-5px);
+}
+
 /* the bounce effect in the navigation bar */
 .nav-links a:hover::after {
   width: 100%;
@@ -97,6 +108,7 @@ body {
 .nav-links a:hover {
   transform: translateY(-5px);
 }
+
 .hero {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -107,11 +119,30 @@ body {
   border-radius: 30px;
 }
 
+#image-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  margin-top: 30px;
+  padding: 50px;
+}
+
+#image-group img{
+  width: 80%;
+}
+
 .hero-copy {
     max-width: 520px;
     display: flex;
     flex-direction: column;
     gap: 18px;
+}
+
+.box {
+  margin-top: 30px;
+  padding: 50px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 30px;
 }
 
 .shape {
