@@ -1,0 +1,17 @@
+[
+  {
+    "question": "REPLACE with a research question relevant to your corpus.",
+    "ground_truth_answer": "REPLACE with the expected correct answer.",
+    "ground_truth_contexts": [
+      "REPLACE with the exact passage(s) from your corpus that support the answer."
+    ]
+  },
+  {
+    "question": "What are the primary differences between X and Y?",
+    "ground_truth_answer": "X differs from Y in three key ways: ...",
+    "ground_truth_contexts": [
+      "Passage from document A that discusses X...",
+      "Passage from document B that discusses Y..."
+    ]
+  }
+]

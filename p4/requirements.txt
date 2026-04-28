@@ -1,0 +1,36 @@
+# Core Frameworks
+langchain>=0.3.0
+langchain-aws>=0.2.0
+langchain-community>=0.3.0
+langgraph>=0.2.0
+
+# Vector Database
+pinecone-client>=5.0.0
+
+# Embeddings
+sentence-transformers>=3.0.0
+
+# Evaluation
+ragas>=0.2.0
+
+# Observability
+langsmith>=0.1.0
+
+# AWS
+boto3>=1.35.0
+aws-sam-cli>=1.130.0
+
+# Structured Output
+pydantic>=2.0.0
+
+# Document Processing
+pypdf>=4.0.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=8.0.0
+
+# Linting (optional — see NFR-4)
+ruff>=0.5.0

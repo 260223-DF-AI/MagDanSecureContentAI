@@ -16,7 +16,7 @@ Policies:
     Violation reasoning: "This description is in violation of the Bechdel test policy on HerSpace. Content on this platform should not be centered around men."
 3. The following phrases are prohibited from post descriptions:
     "guys night out", "boys night out", "out with the boys", "man cave", "my boysss", "alpha male", "sigma male"
-4. These phrases are strictly allowed as they promote HerSpace mission statement: "girls night out", "girls day"
+4. These phrases are strictly allowed: "girls night out", "girls day"
 5. Profanity is strictly prohibited.
     
 Example content moderation:

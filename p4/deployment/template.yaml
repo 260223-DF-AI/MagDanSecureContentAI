@@ -1,0 +1,45 @@
+# =============================================================================
+# ResearchFlow — AWS SAM Template
+# =============================================================================
+# Infrastructure-as-Code for deploying the LangGraph agent to AWS Lambda
+# behind API Gateway.
+#
+# Deploy with:  sam build && sam deploy --guided
+# =============================================================================
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ResearchFlow — Adaptive Multi-Agent Research Assistant
+
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 512
+    Runtime: python3.11
+
+Resources:
+
+  ResearchFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: .
+      Description: Handles /research POST requests
+      # TODO: Add environment variables from .env.example
+      # Environment:
+      #   Variables:
+      #     PINECONE_API_KEY: !Ref PineconeApiKey
+      #     BEDROCK_MODEL_ID: !Ref BedrockModelId
+      Events:
+        ResearchApi:
+          Type: Api
+          Properties:
+            Path: /research
+            Method: post
+
+  # TODO: Add any additional resources (e.g., IAM roles, DynamoDB for Store)
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway endpoint URL for the research endpoint"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/research"
