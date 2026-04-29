@@ -1,0 +1,117 @@
+Crash Course Philosophy is brought to
+you by Squarespace. Squarespace: share your passion with the world. By the time we’re done today, I just might
+have you questioning whether this apple is real or not. Think I can’t do it? Gimme
+about ten minutes! I might have you wondering whether I’m a physical object or not. And the same goes for all of this stuff, and your
+computer, and Nick behind the camera! And … you! How? By unleashing the power of empiricism. [Theme Music] Last time, we learned about 17th century philosopher
+Rene Descartes, and how he upended the apple-basket that was his entire personal belief system,
+and descended into a radical skepticism, only to emerge with his conviction that: Cogito
+ergo sum – I think, therefore I am. This one idea -- the fact that he was thinking
+-- or really, the fact that he was doubting -- allowed him to build back up, one by one,
+more beliefs that he thought he could rely on. But in the end, most of the beliefs that Descartes
+ended up putting back into his intellectual apple-basket had to do with the immaterial
+world. Like, he decided that he could believe that
+he existed, as a thinking thing. And he believed that God existed. Ultimately, he lit upon the idea that some
+of our thoughts are clear and distinct in a way that somehow guarantees their truth. But, a lot of philosophers disagreed. They
+argued that thinking on its own wasn’t enough. Like, just because you’re thinking, doesn’t
+mean that your thoughts correspond to material reality in any reliable way. Basically, Descartes’ philosophical opponents
+thought that the Cogito was a dead end. So here, we start to see a split between two
+different understandings of how we can most reliably get to the nature of reality, and
+therefore truth. Both were responses to the constant questioning that is skepticism. On
+the one hand, there was rationalism. And on the other: empiricism Descartes, like Plato long before him, was a lover of reason. He met skepticism with rationalism. He believed that the most real things in life were ideas -- propositions that can be known through pure reason. Deductive truths, which we talked about before,
+fall into this category. And mathematical truths do, too. But by contrast, empiricism is based on the
+principle that the most reliable source of knowledge isn’t our ideas, or our reasoning,
+but our senses. Sure, we can know things through deduction
+and basic logic. But what actually leads us to truth, or at
+least gives us our best shot at getting there, are things like induction, and the scientific method -- ways of thinking that tell us about the material world. Probably the most famous split among philosophers
+between these two camps was the life-long debate between Plato and Aristotle. Plato was convinced that Truth resided in
+the immaterial world of Ideas, while Aristotle’s attention was focused firmly on the ground. But what about in Descartes’ day? If he
+was the original prototype of the navel-gazing philosopher -- a living example of rationalist
+thinking — then his foil was was the 17th century English thinker John Locke. This is
+where he was born. Locke believed that we’re all born as a
+tabula rasa, or a blank slate. He argued that all knowledge is
+obtained through experience. He rejected the concept of innate ideas -- the
+view that we’re born pre-loaded with certain information, like what’s good versus what’s
+bad, or what is the nature of God. Locke thought that we are born knowing nothing. And instead, all of our knowledge comes
+to us through sense data. But one place where Locke agreed with Descartes
+was in the idea that, just because your senses tell you something, that doesn’t mean you
+can trust it. After all, sometimes your senses give you
+false information, like when you think you see or hear something that’s just not there. Descartes’ response to this, of course,
+was to just throw out all sense experience as an unreliable source of knowledge. But Locke didn’t go that far. Instead, in
+order to figure out whether the senses accurately reflect the outside world, he introduced a
+distinction between what he called the primary and secondary qualities of all things. Primary qualities are qualities that physical
+objects themselves have. They’re not in our minds, Locke argued -- they’re actually
+in the stuff. These primary qualities include things like solidity -- the density, weight,
+and mass of an object. And also extension -- the height, depth, and width that a certain
+thing has. He also included figure, or the shape of an object, as well as mobility, which
+is this – whether it’s stationary or in motion. So primary qualities, Locke said, belong to
+the thing itself. Take this apple. It weighs maybe 150 grams,
+is the size of my palm, roundish, but firm, with the slightest bit of give, and right
+now it’s moving through the air. Those are its primary qualities. But it has secondary qualities, too. And by Locke’s standards, they are not real.
+At least not in any objective, agreed-upon way. They’re just in our minds. But they
+get there through the primary qualities. I’m talking about things like its color, taste,
+texture, smell, and sound. The secondary qualities of this apple are
+its redness, and how it tastes and smells and feels on my tongue and hand. Even how
+it sounds when I bite into it. Locke believed that the distinction between
+primary and secondary qualities explained the disagreements that we all have about our
+perceptions of the outside world. Like, we could measure this apple in a bunch
+of ways and all agree on its primary qualities, but its secondary qualities would no doubt
+lead to some disputes. Like, is it really red? What kind of red exactly?
+Cardinal red? Or carmine red? It’s kind of dark purple at the top -- or is it just
+like a dark pink? What about the sound it made? Would I call that
+crunchy? Or crispy? Or...bite-y? It’s like, apple sound. We could argue about that kind of stuff til
+the cows came home. But if we disagree about its primary qualities
+– one of us is simply wrong. Because primary qualities have nothing to do with you, or me. Instead they have everything to do with the object itself. Locke’s reasoning was simple, even elegant,
+extracting a lot of explanatory power out of very few basic concepts. As a result, it
+resonated with a lot people. And one person it resonated strongly with
+was the Irish philosopher George Berkeley. He was moved by Locke’s empiricism and took
+it seriously -- so seriously, in fact, that ended up using Locke’s own logic against
+him. He basically took empiricism to its logical
+conclusion, dismantling the whole process of perception to the point that he had to
+wonder whether anything existed at all. Berkeley began by taking apart the distinction that Locke made between primary and secondary qualities. Like, think about this apple again. How do
+you know its shape? Locke said that the apple’s shape, as a
+primary quality, is immediately perceivable. But Berkeley pointed out that you don’t
+perceive some qualities of an object, while totally disregarding others. Like, you can’t
+detect an apple’s shape without first -- or at least without also -- detecting its color.
+When you think about it, you can’t detect any of the primary qualities without also
+considering the secondary ones. You can’t see a colorless apple.
+You can’t feel a textureless apple. In fact, if you try to strip away the apple’s
+secondary qualities in an effort to get at the primary ones, you end up with no apple
+at all. Try it: Close your eyes and imagine an apple
+made of only primary qualities -- so, it has a certain shape and a certain size, but it
+doesn’t have any color or texture or taste. You can’t do it. You try to imagine it with no color, but really,
+you’re probably imagining one that’s either black or white or transparent -- the color
+of what’s behind it. And if you try to imagine it as having no
+texture, you’ll find there’s still a texture there – it’s just smooth. Remember: Locke asserted that secondary qualities
+are not objectively real. They can only be subjectively perceived. But now, Berkeley
+has shown that the two are inextricably linked – you can’t have one without the other. Which means that primary qualities can’t
+be real, either. They, too, are just what your mind makes of things. So this led Berkeley to a startling conclusion:
+There’s just no such thing as matter. There can’t be! Instead, there’s only
+perceptions. Berkeley’s famous assertion --
+his version of cogito ergo sum -- was esse est percepi:
+“to be is to be perceived.” In his opinion, there are no objects, only
+perceivers – and even then, the perceivers themselves don’t really have any physical
+form. They’re just disembodied minds perceiving things that aren’t really there. A little bit terrifying when you start thinking
+about it. In Berkeley’s scenario, we’re all set
+adrift in a world of nothing but thought. What’s scary about it is this, if everything’s
+just perception, then when the perception goes away, there can’t be anything left. So like, please, for the love of Pete, do
+not turn away from your computer! If you stop perceiving me, I stop existing! But, what if maybe you don’t care about
+me? Still, you’d better not go to sleep, because as soon as you do, you’ll cease
+to exist! Because, you won’t be able to perceive yourself! The only guarantee that
+you’ll continue to exist in your sleep is to have a friend watch you when you’re sleeping. Which probably is a non-starter, for a number of reasons. But in any case, the second your
+friend blinks, you’re gone! So in the end, Berkeley believed there was
+only one thing that kept us -- and everything else -- from disappearing into oblivion. God.
+Berkeley believed that God was the Ultimate Perceiver. God is always watching, with unblinking perception that holds objects in existence even when we’re not paying attention. The tough thing about Berkeley is, we all
+pretty much think he has to be wrong. Very few of us are willing to give up our belief in the physical world — no matter who’s watching. We are sensory animals!
+We really need this apple to exist. Next time, we’re going to take a side journey
+into the world of knowledge. And then, in episode 8, we’ll see if Karl Popper can
+manage to get the physical world back for us. Today we have learned about empiricism as
+a response to skepticism. We talked about John Locke and his distinction between primary
+and secondary qualities. And we’ve seen why George Berkeley thinks that distinction
+ultimately falls apart -- leaving us with literally nothing but our minds, ideas, and
+perceptions. This episode of Crash Course Philosophy is
+made possible by Squarespace. Squarespace is a way to create a website, blog or online
+store for you and your ideas. Squarespace features a user-friendly interface, custom
+templates and 24/7 customer support. Try Squarespace at squarespace.com/crashcourse for a special
+offer. Crash Course Philosophy is produced in association
+with PBS Digital Studios. You can head over to their channel to check out some amazing shows like Idea Channel, The Art Assignment, and Gross Science This episode of Crash Course was filmed in
+the Doctor Cheryl C. Kinney Crash Course Studio with the help of these awesome people and our equally fantastic graphics team is Thought Cafe.

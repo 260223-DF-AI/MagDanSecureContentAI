@@ -16,3 +16,14 @@ Place your research documents here. The ingestion pipeline (`scripts/ingest.py`)
 ```bash
 python scripts/ingest.py --input-dir ./data/fact-check-sources --namespace fact-check-sources
 ```
+
+## Dev Notes
+Our corpus consists of transcripts from the YouTube channel CrashCourse's series on philosophy. Transcripts are stored locally as .txt files. Future project extension may aim to integrate API transcript retrieval. Limiting to this single dataset allows us to properly assess the effectiveness of our RAG application and easily manage the preprocessing step.
+
+# To-do
+- create golden dataset
+- rename files, rming ws *preserve og title formate for below -> title = convert '_' to ':' AND rm '.txt' 
+- attach metadata - video title, link, channel, duration (opt), views (opt)
+    - opt might be best for future uses
+- create embeddings
+- add to pinecone/doc ingestion

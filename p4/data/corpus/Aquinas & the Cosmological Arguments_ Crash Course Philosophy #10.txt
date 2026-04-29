@@ -1,0 +1,130 @@
+Crash Course Philosophy is brought to you
+by Squarespace. Squarespace: share your passion with the world. Nothing gets people talking like proving the existence of God -- just look at the comments on our last video. And that is what Anselm of Canterbury did.
+He claimed, in the 11th century, to have come up with deductive proof of God’s existence, through what we now know as the ontological argument. And, if there was such a thing as a social
+network of medieval Christian philosophers back then, it was positively abuzz with the
+news. For a long time. Because, almost 200 years later, Italian theologian and philosopher
+Thomas Aquinas encountered Anselm’s argument. But, like many others, he just didn’t buy
+it. Aquinas did believe in God. It was just that,
+as a philosopher, he felt that it was important to have evidence for your beliefs. He knew
+that if he was going to dismiss Anselm’s argument, he’d need to come up with something
+better. So, he set out to construct five arguments that would prove God’s existence, once and
+for all. Yeah, five. Apparently, he was concerned one
+wasn’t going to do it, so he figured that, out of five, one was bound to stick. His first four arguments are known together
+as the cosmological arguments, as they seek to prove God’s existence through what he
+argued were necessary facts about the universe. So, in keeping with the method that we discussed
+in our very first episode, we’re going to examine these first four arguments of Thomas
+Aquinas -- and really try to understand them. And then we’ll consider their merits…
+...and their weaknesses. [Theme Music] Maybe the most striking thing about the cosmological
+arguments of Aquinas, at least to modern eyes, is that some of them are firmly based in the
+natural world. Even though he lived in a pretty unscientific time, Aquinas argued for the
+existence of God through his understanding of science, and with the help of what he thought
+was physical evidence. For example, the first of his cosmological
+arguments is known as the Argument from Motion. In it, Aquinas observed that we currently
+live in a world in which things are moving. And he also observed that movement is caused
+by movers -- things that cause motion. Aquinas was convinced that everything that’s moving
+must have been set into motion by something else that was moving. By this logic, something
+must have started the motion in the first place. Otherwise, you’d be stuck in a philosophical
+quandary known as an infinite regress. You get an infinite regress when, in a chain of
+reasoning, the evidence for each point along the chain relies on the existence of something
+that came before it, which in turn relies on something even further back, and so on,
+with no starting point. Basically, Aquinas thought the very idea of
+infinite regress was absurd, logically impossible. Because, it implied that any given series
+of events began with…nothing. Or, more accurately, never really began. Instead, it could have
+been going on forever. In the case of physical motion, Aquinas wanted
+to trace the cause of the movement he saw in the world all the way back to its beginning.
+And he figured there MUST have been a beginning. Otherwise, for him, it would be like watching
+these blocks fall, and being told that nothing ever pushed over the first block. Instead,
+they had always been falling down forever, backward into eternity. There must have been
+a time when nothing was in motion, Aquinas thought, and there also must’ve been a static
+being that started the motion. And that being, according to Aquinas, is God – the Unmoved
+Mover. So his Argument From Motion ran something
+like this: Objects are in motion
+Everything in motion was put into motion by something else
+There can’t be an infinite regress of movers So there must have been a first mover, itself
+unmoved, and that is God Now, the second cosmological argument
+of Aquinas was a lot like his first one. Here, he proposed the Argument from Causation, and it, too, sets out to avoid the problem of an infinite regress. But instead of it explaining the motion of
+objects, it set out to explain causes and effects, in general, all over the universe. The argument went along these lines:
+Some things are caused Anything that’s caused has to be caused
+by something else (since nothing causes itself) There can’t be an infinite regress of causes So there must have been a first causer,
+itself uncaused, and that is God Just like with the Argument from Motion, the
+point here is pretty simple: Effects have causes. If you think about how you wound up watching this
+video, you can trace the line of causation back, from moment to moment. If you think about it long enough, you can probably go pretty far back. But Aquinas said, again: It can’t go back
+forever. There had to be a First Thing that started off the chain of causes and effects.
+And that Thing is God. Argument number three was the Argument from
+Contingency. And we should step back and get a little background for this one. In philosophy,
+we often distinguish between necessary beings and contingent beings. A contingent being is,
+simply put, any being that could have not existed. That includes you. Sure, you
+do exist, but you could not have. If you had never been born, the world would go on. And
+yes, things would be different – we’ve all seen It’s A Wonderful Life – but the
+world would go on. Instead, your existence is merely contingent on the existence of other
+things. In your case, you only exist because a certain sperm met a certain egg and swapped
+some genetic information. You’re basically a fluke. But what does that have to do with God? Well,
+again, Aquinas believed that there had to be something that prevented an infinite regress
+of contingency. That would mean that the contingency on which everything existed would just keep
+going back in time. And we can’t have a world where everything is contingent, Aquinas
+said, because then -- by definition -- it all could easily have never existed. So he
+needed at least one necessary being – a being that has always existed, that always
+will exist, and that can’t not exist, in order to get everything going. And that necessary
+being is God. Aquinas spelled out the reasoning of his Argument
+from Contingency this way: There are contingent things
+Contingent things can cause other contingent things, but there can’t only be contingent
+things Because that would mean that there’s an
+infinite regress of contingency, and a possibility that nothing might have existed
+An infinite regress is impossible So there must be at least one necessary thing,
+and that is God Let that marinate in your brain for a minute
+while unpack the next argument. This one is built on the idea that we simply need a measuring stick in order to understand the value of things. Good/bad, big/small, hot/cold – none of
+these concepts can exist in isolation. If you go out for a walk and you see an animal,
+and it’s like this big, that animal would be on the small side if it turned out to be
+a dog. But if it were a rat, that would be HUGE. How do we know? Because we gauge the size
+of things in terms of other things. The same idea applies to more abstract concepts, like your grades. How do we know that an A is good? Because it’s at the top -- we know that there are grades lower than an A, but nothing higher. And Aquinas thought that all of our value
+concepts would just be floating randomly in space if there weren’t some anchor – something
+that defined the value of everything else, by being perfect – and that, again, is God. This is how Aquinas developed Number four,
+known as Argument from Degrees. Properties come in degrees
+In order for there to be degrees of perfection, there must be something perfect against which
+everything else is measured God is the pinnacle of perfection Ok, so we’ve considered Aquinas’ four
+cosmological arguments. But remember, that’s only step one. The next, and equally important
+step in philosophy, is critical evaluation. So what do we make of ‘em? As philosophers, if you think an argument
+is flawed, it’s your job to try and figure out why. And by and large, philosophers – theists
+and atheists alike – have been relatively unimpressed by these four, having found many
+problems in them. For one thing, these arguments don’t seem
+to establish the existence of any particular god. Even if the arguments are correct, it
+doesn’t look like Aquinas gets us to the personal, loving God that many people pray
+to. Instead, we’re left with unmoved movers and uncaused causers who seem to have little
+in common with the God of Abraham, Isaac, and Jacob ... the God who feels emotions, and
+cares about his creation, and answers prayers. Basically, this objection says that
+Aquinas’ god is so far removed from the god that theists actually believe in, that
+it doesn’t help anything. But maybe you’re happy just believing
+someone’s out there. That’s fine. But then how about multiple someones? Because – guess what – Aquinas’ arguments
+don’t rule out polytheism. There’s nothing in any of his arguments to prove that God
+isn’t actually, like, a committee. Aquinas’ cosmological arguments also don’t prove
+the existence of a sentient God. So, it might be an old guy with a beard. It might be six
+old guys with beards. But it also might be an egg, or a turtle, or just a big block of
+stone. These observations have made some philosophers
+uncomfortable with Aquinas’ ultimate conclusion. But there are two objections that are thought
+by some to be real nails in its coffin. The first is simply that Aquinas was wrong
+in his insistence that there can’t be an infinite regress of anything. Aquinas takes
+it as a given that there had to be a starting point for everything -- whether it’s the
+movement of objects, or causes and effects, or contingent beings being created. But it’s
+unclear that this is true, or why it has to be true. If infinite regress can be possible, then
+Aquinas’ first two arguments fall apart. But perhaps the most significant charge made
+against Aquinas’ arguments is that they’re self-defeating -- that is, they actually prove
+themselves wrong. For example: If Aquinas is right that everything
+must have been put in motion by something else, and everything must have a cause other
+than itself, then it seems that God should be subject to those same stipulations. And
+if God is somehow exempt from those rules, then why couldn’t other things be exempt
+from them too? If they can exist without God being responsible them, then we don’t need
+God to establish things in the first place. All right, I’ve given you a lot to think
+about. So before we close, let’s pause and remind
+ourselves about a couple of things. First, you can accept a conclusion but reject
+an argument. So you might agree with Aquinas that God exists, but think none of his arguments
+prove it. Second, if you disagree with an argument,
+you don’t get to just say, “yeah, you’re wrong.” You have to give a counterargument. What did Aquinas get wrong, and how can you do better? Why are your reasons superior to his?
+Remember, philosophy is a dialectic. Yes, Aquinas has been dead for centuries. But he started a conversation. And you get to participate in that when you engage with his arguments, and offer your own, either in an effort to help him out – by fixing flaws in his arguments while preserving his conclusion – or by refuting his entire project. This is what it means to do philosophy – to engage with arguments about stuff that matters. And whether or not there’s a God seems to matter quite a bit, particularly in the lives of theists. Today we’ve learned about cosmological arguments,
+and considered four of them. Next time, we’ll look at Aquinas’ fifth argument, the teleological
+argument. This episode of Crash Course Philosophy is
+made possible by Squarespace. Squarespace is a way to create a website, blog or online
+store for you and your ideas. Squarespace features a user-friendly interface, custom
+templates and 24/7 customer support. Try Squarespace at squarespace.com/crashcourse for a special
+offer. Crash Course Philosophy is produced in association
+with PBS Digital Studios. You can head over to their channel and check out some amazing shows like PBS Idea Channel, The Chatterbox, and PBS Space Time. This episode of Crash Course was filmed in
+the Doctor Cheryl C. Kinney Crash Course Studio with the help of all these awesome people and our equally fantastic graphics team is Thought Cafe.

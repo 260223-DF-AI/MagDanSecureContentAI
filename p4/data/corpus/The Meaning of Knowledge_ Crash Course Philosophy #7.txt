@@ -1,0 +1,122 @@
+Crash Course Philosophy is brought to you
+by Squarespace. Squarespace: Share your passion with the world. You probably think you know a lot of things. But do you know what it means to know something? We’ve spent quite a bit of time discussing
+beliefs and knowledge, but we haven’t really been specific about what we mean when we talk
+about those things. Thankfully, philosophers love a good definition.
+They have very specific and lucid ideas in mind when they use terms like know or believe
+or proposition or justification. And, about ten minutes from now, you too will know what you’re really saying when you use those words. But, just because these terms have been defined, doesn’t mean that philosophers aren’t still arguing over them. Because you know, that’s how philosophers
+do. Their definitions might seem kind of obvious
+at first, but the more you think about them, the more nuanced they turn out to be. Like, is having knowledge of something the
+same thing as being correct? Or, if you believe something to be true, and
+it is true, does it matter if your belief in it is justified? And can you be right about something without
+really trying? Answers to these questions and more await
+you, as well as cats! [Theme Music] So you’ve heard this already: Philosophers
+love a good argument. But you’ve figured out by now that philosophers
+argue in a different way than, like, kindergarten kids, or Internet trolls, or other people
+who confuse “arguing” with sniping back and forth or just thinking up witty comebacks. Nope. Philosophers have all kinds of rhetorical
+devices at their disposal that they can use to advance an idea, or call into question
+the ideas of their interlocutors. So in order to hold your own in a philosophical
+debate, you’re gonna have to know the difference between two things that sound like exactly
+the same thing: an assertion, and a proposition. And you’ll need to be able to tell whether
+someone actually knows what they’re talking about, or if they just believe what they’re
+saying might be true. For example: The sentence I’m saying right
+now is an assertion. An assertion is a linguistic act – either spoken or written – that
+has a truth value. And despite what it might sound like, truth value isn’t a measure
+of how right something is. It’s just the state of being either true, or false, or indeterminate.
+All declarative sentences have truth values. Declarations that assert something about the
+past or present are either true or false. And assertions about the future are indeterminate,
+at least when they’re expressed, because no one knows if they’re right or not yet. For example, I’m gonna assert that “This cat will pee on my desk before the end of the show.” That assertion has a truth value, but it’s
+indeterminate, because the show’s not over yet. We’re just gonna have to wait and see. Now, all of this contrasts with other kinds of linguistic acts, like questions, which don’t assert anything. “This is a cat” is an assertion, as opposed
+to “Is that a cat?,” which is a linguistic act, but not an assertion. But the substance of what you assert has a
+name, too. The content of your assertion is your proposition.
+It’s the underlying meaning of what you’re saying. So even though an assertion itself can change,
+depending on say, what language it’s spoken in, its meaning doesn’t change just because
+its outer packaging does. Like, “This is a cat” and “Este es un
+gato,” both assert the same proposition. And a proposition is true if it asserts a
+claim that corresponds to reality. The proposition when I assert “This is a
+cat,” is true if the object of the “this” is in fact a cat, and false if it is anything
+other than a cat. Like, “This is a cat.” It’s worth pointing out that attitude counts,
+too, when you’re asserting something. A speaker’s mental state toward the proposition
+they’re making is their propositional attitude. If I say, like, “This is a cat,” but I
+actually believe it to be a rat and I’m trying to fool you, then philosophers would
+say that I have a propositional attitude of disbelief. Whereas, if I think I’m speaking truthfully,
+I have a propositional attitude of belief. And of course, you’re not going to get very
+far as a philosopher unless you understand the classic definition of belief itself. Based
+on the lingo you’ve learned so far today, belief is just when you take a propositional
+attitude of truth. I believe that this is a cat, if I think it’s
+true – that is, if my attitude is that the assertion corresponds to reality. And even
+if I’m wrong -- even if there were an aardvark on my desk, or if there weren’t a cat on
+my desk at all, which there isn’t anymore -- if I really thought there was a cat on
+my desk, that would just be my belief. My propositional attitude, in other words,
+is what determines if I have a belief. What all this means is that I, like everyone
+else, can have false beliefs. Simply thinking something doesn’t make it correspond to
+reality, which is what’s needed for truth. But of course, the fun of arguing is showing
+off what you know to other people, or at least producing really clever evidence to support
+your case. So, this raises the question of what it means to actually know something, in the philosophical sense. The traditional definition of knowledge is
+that it’s a justified true belief. Note that there are three separate components here. So, I have knowledge that this is a cat if:
+I first believe i’s a cat And also that it is in fact a cat – that
+is, my belief corresponds to reality and is therefore true. And finally, I can be said
+to have knowledge about this cat if my belief is justified – meaning, I have some sort
+of legitimate evidence to support my belief. Now, we’ve already defined truth and belief.
+Justification is simply evidence, or other support, for your belief. If you remember
+back to episode 2, you’ll recall that premises offer justification for conclusions. And justification
+can come in a variety of forms. Most often, it comes about through testimony – just
+taking someone’s word for it. Not all testimony is strong, or trustworthy, of course. But
+if it comes from someone who’s an expert on the topic in question, you might consider
+the testimony to be reliable. And the fact is, most of what you know about
+the world, you learned through testimony. You took your teachers’ word for it when
+they were teaching you stuff, and the same goes for every book you’ve ever read and
+every news report you’ve ever seen. They’re all just forms of testimony, which you accepted as justification for your knowledge, and your beliefs. But justification can come in other forms,
+too. Another common type is first person observation – information you acquire through your senses. If I believe that a cat is a cat, because
+I already have robust and well-informed beliefs about cats, then, having had extensive experience
+with them in the past, I’m identifying the cat as a cat through my direct contact with
+it It looks, feels, acts like a cat. Ergo: cat! But! Philosophy wouldn’t be any fun if the
+key to knowledge were that easy, right? Until American philosopher Edmund Gettier
+came along in the 1960s, philosophers were in pretty widespread agreement about the definition
+of knowledge -- that it’s justified true belief. Because, you can believe any old thing, but
+in order to know something, it just makes sense that you must also have evidence for
+your belief, and it must be true. In other words, you can have a false belief, but you
+can’t have false knowledge. And if something you thought you knew turns out not to be true, then the fact is, you never actually knew it, you just believed it. And likewise, you might happen to hold a true belief, but if you don’t have any justification for it, if you just accidentally happened to be right, which happens sometimes – that doesn’t count as knowledge, either. Enter Edmund Gettier. Gettier wrote a short
+but fabulously influential paper that turned the standard understanding of knowledge upside
+down. He did this by proposing what came to be known
+as Gettier cases – situations in which one can have justified true belief, but not knowledge. Which brings us to this week’s Flash Philosophy!
+Let’s go to the Thought Bubble. Here’s one of Gettier’s original cases.
+Smith and Jones have both applied for the same job. The president of the company told Smith that Jones will get the job. This counts as evidence; the president of the company would seem to be a reliable source of this information. Meanwhile, Smith counts the coins
+in Jones’ pocket and sees that there are ten coins in there. Smith then forms a belief,
+based on his first person observational evidence of the coins, as well as the testimony of
+the company president. He comes to believe that: The person who gets
+the job has 10 coins in his pocket. But, it turns out, the testimony of the president
+was false, and it’s Smith, not Jones, who gets the job. AND, it just so happens, unbeknownst to Smith,
+that he also has 10 coins in his own pocket. So, Smith has a belief – that the person
+who gets the job has 10 coins in his pocket. And that is justified – because he counted
+Jones’ coins, and the president told him Jones was getting the job. And his belief
+also turns out to be true – the person who got the job did have 10 coins in his pocket. However, neither pieces of justification actually
+pointed Smith to the right answer. The president’s testimony was wrong, and the 10 coins that
+he saw were in Jones’ pocket, not his own. So it seems Smith simply lucked into being
+right. Gettier argued that we now have a case of
+justified true belief that is not knowledge. As he pointed out, you don’t KNOW something
+if you simply stumbled into the right answer. Thanks Thought Bubble, the philosophical world
+was turned upside down by this idea, and philosophers – loving a good counterexample – began
+generating their own Gettier cases. American philosopher Roderick Chisholm proposed
+this one: Looking across a field, you see an object
+that looks like a sheep, and you form the belief that “there is a sheep in the field.” It turns out that the object you see is actually
+a dog. Yet, there is also a sheep, obscured from
+your vision by a hill. So, you have a justified true belief, but
+the justification for your belief -- the object that you saw – is not a sheep. You just
+lucked into being right. Once you understand how it works, it’s pretty
+easy to generate Gettier cases of your own. And many philosophers today think that Gettier successfully destroyed the “justified true belief” definition of knowledge. But even though the 1960s might seem long
+ago to you, remember: philosophers are in the business of having millennia-long debates
+about stuff. So it shouldn’t surprise you that the philosophical debate about this is
+still a-raging. But if knowledge is not justified true belief,
+then…whaaat is it? Next time, we will look at one possible answer. In the meantime, you learned about some of
+the key concepts we use when discussing belief and knowledge. You learned what defines an
+assertion and a proposition, and that belief is a kind of propositional attitude. We also
+learned about forms of justification and the traditional definition of knowledge, which Edmund Gettier just totally messed with, using his Gettier cases. And the cat did not pee on my desk! Because
+the cat was unable to spend any time at all on my desk. So it turns out the assertion
+that I made was false. But it is a true assertion that this episode
+was brought to you by Squarespace. Squarespace helps to create websites, blogs or online
+stores for you and your ideas. Websites look professionally designed regardless of skill
+level, no coding required. Try Squarespace at squarespace {dot com} {forward slash} crash
+course for a special offer. Crash Course Philosophy is produced in association
+with PBS Digital Studios. You can head over to their channel to check out amazing shows
+like Game/Show, The Chatterbox, and Physics Girl This episode of Crash Course was filmed in
+the Doctor Cheryl C. Kinney Crash Course Studio with the help of these awesome people and our equally fantastic graphics team is Thought Cafe.
