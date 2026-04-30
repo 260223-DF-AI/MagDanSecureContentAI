@@ -5,7 +5,22 @@ Builds and returns the main LangGraph StateGraph that orchestrates
 the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 """
 
-from agents.state import ResearchState
+from agents.state import PlanTask, ResearchState 
+
+from __future__ import annotations
+from typing import Any 
+from langgraph.graph import END, StateGraph
+
+try:
+    from langgraph.types import interrupt
+except ImportError:
+    interrupt = None
+
+DEFAULT_MAX_ITERATIONS = 3
+DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
+
+def _append_scratchpad(state: ResearchState, message: str) -> list[str]:
+    return [*state.get("scratchpad", []), message]
 
 
 def planner_node(state: ResearchState) -> dict:
@@ -17,7 +32,46 @@ def planner_node(state: ResearchState) -> dict:
     - Return a list of sub-tasks (Plan-and-Execute pattern).
     - Write to the scratchpad for observability.
     """
-    raise NotImplementedError
+
+    question = state["user_question"]
+
+    plan: list[PlanTask] = [
+        {
+            "id": 1,
+            "task_type": "retrieve",
+            "description": f"Retrieve relevant source chunks for: {question}",
+            "status": "pending",
+        },
+        {
+            "id": 2,
+            "task_type": "analyze",
+            "description": "Synthesize an answer using the retrieved chunks.",
+            "status": "pending",
+        },
+        {
+            "id": 3,
+            "task_type": "fact_check",
+            "description": "Verify the answer against trusted fact-check sources.",
+            "status": "pending",
+        },
+    ]
+
+    return {
+        "current_plan": plan,
+        "current_task_index": 0,
+        "current_task": plan[0],
+        "retrieved_chunks": state.get("retrieved_chunks", []),
+        "analysis_output": state.get("analysis_output", ""),
+        "fact_check_results": state.get("fact_check_results", {}),
+        "confidence_score": state.get("confidence_score", 0.0),
+        "iteration_count": state.get("iteration_count", 0),
+        "max_iterations": state.get("max_iterations", DEFAULT_MAX_ITERATIONS),
+        "hitl_required": False,
+        "scratchpad": _append_scratchpad(
+            state,
+            f"Planner created {len(plan)} tasks for question: {question}",
+        ),
+    }
 
 
 def router(state: ResearchState) -> str:
@@ -28,7 +82,121 @@ def router(state: ResearchState) -> str:
     - Inspect the current plan and state to choose the next node.
     - Return the node name as a string (used by add_conditional_edges).
     """
-    raise NotImplementedError
+    current_task = state.get("current_task")
+
+    if not current_task:
+        return "critique"
+
+    task_type = current_task["task_type"]
+
+    if task_type == "retrieve":
+        return "retriever"
+
+    if task_type == "analyze":
+        return "analyst"
+
+    if task_type == "fact_check":
+        return "fact_checker"
+
+    return "critique"
+
+def _advance_plan(state: ResearchState, node_name: str) -> dict[str, Any]:
+    plan = state.get("current_plan", [])
+    index = state.get("current_task_index", 0)
+
+    if index < len(plan):
+        plan[index]["status"] = "complete"
+
+    next_index = index + 1
+    next_task = plan[next_index] if next_index < len(plan) else None
+
+    return {
+        "current_plan": plan,
+        "current_task_index": next_index,
+        "current_task": next_task,
+        "scratchpad": _append_scratchpad(
+            state,
+            f"{node_name} completed task index {index}.",
+        ),
+    }
+
+def retriever_node(state: ResearchState) -> dict[str, Any]:
+    """
+    Retriever node placeholder.
+
+    Replace this section with your real Pinecone retriever agent call.
+    """
+
+    task = state.get("current_task", {})
+    question = state["user_question"]
+
+    retrieved_chunks = [
+        {
+            "text": f"Placeholder retrieved context for: {question}",
+            "source": "sample_source.pdf",
+            "page": 1,
+            "score": 0.88,
+            "task": task.get("description", ""),
+        }
+    ]
+
+    updates = _advance_plan(state, "Retriever")
+
+    return {
+        **updates,
+        "retrieved_chunks": retrieved_chunks,
+    }
+
+def analyst_node(state: ResearchState) -> dict[str, Any]:
+    """
+    Analyst node placeholder.
+
+    Replace this section with your real Bedrock analyst agent call.
+    """
+
+    chunks = state.get("retrieved_chunks", [])
+
+    analysis_output = {
+        "answer": "Placeholder synthesized answer based on retrieved context.",
+        "citations": [
+            {
+                "source": chunk.get("source"),
+                "page": chunk.get("page"),
+            }
+            for chunk in chunks
+        ],
+        "self_assessed_confidence": 0.8,
+    }
+
+    updates = _advance_plan(state, "Analyst")
+
+    return {
+        **updates,
+        "analysis_output": analysis_output,
+        "confidence_score": analysis_output["self_assessed_confidence"],
+    }
+
+def fact_checker_node(state: ResearchState) -> dict[str, Any]:
+    """
+    Fact-checker node placeholder.
+
+    Replace this section with your real fact-checking agent call.
+    """
+
+    confidence = state.get("confidence_score", 0.0)
+
+    fact_check_results = {
+        "overall_verdict": "Supported" if confidence >= 0.75 else "Inconclusive",
+        "unsupported_claims": [],
+        "evidence": state.get("retrieved_chunks", []),
+    }
+
+    updates = _advance_plan(state, "Fact-checker")
+
+    return {
+        **updates,
+        "fact_check_results": fact_check_results,
+    }
 
 
 def critique_node(state: ResearchState) -> dict:
@@ -42,7 +210,101 @@ def critique_node(state: ResearchState) -> dict:
     - If above threshold, accept and route to END.
     - Increment iteration_count.
     """
-    raise NotImplementedError
+    confidence = state.get("confidence_score", 0.0)
+    iteration_count = state.get("iteration_count", 0)
+    max_iterations = state.get("max_iterations", DEFAULT_MAX_ITERATIONS)
+
+    fact_check_results = state.get("fact_check_results", {})
+    unsupported_claims = fact_check_results.get("unsupported_claims", [])
+
+    next_iteration_count = iteration_count + 1
+
+    if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
+        analysis = state.get("analysis_output", {})
+        final_answer = (
+            analysis.get("answer", "")
+            if isinstance(analysis, dict)
+            else str(analysis)
+        )
+
+        return {
+            "critique_decision": "accept",
+            "final_answer": final_answer,
+            "iteration_count": next_iteration_count,
+            "hitl_required": False,
+            "scratchpad": _append_scratchpad(
+                state,
+                f"Critique accepted response with confidence {confidence}.",
+            ),
+        }
+
+    if next_iteration_count < max_iterations:
+        retry_target = "retry_retriever" if unsupported_claims else "retry_analyst"
+
+        return {
+            "critique_decision": retry_target,
+            "iteration_count": next_iteration_count,
+            "current_task_index": 0 if retry_target == "retry_retriever" else 1,
+            "current_task": state.get("current_plan", [])[0]
+            if retry_target == "retry_retriever"
+            else state.get("current_plan", [])[1],
+            "scratchpad": _append_scratchpad(
+                state,
+                f"Critique requested refinement: {retry_target}.",
+            ),
+        }
+
+    if interrupt is not None:
+        human_feedback = interrupt(
+            {
+                "reason": "Low confidence or unsupported claims after max retries.",
+                "confidence_score": confidence,
+                "fact_check_results": fact_check_results,
+                "analysis_output": state.get("analysis_output", {}),
+            }
+        )
+
+        return {
+            "critique_decision": "hitl",
+            "hitl_required": True,
+            "final_answer": str(human_feedback),
+            "iteration_count": next_iteration_count,
+            "scratchpad": _append_scratchpad(
+                state,
+                "Critique escalated to HITL review.",
+            ),
+        }
+
+    return {
+        "critique_decision": "hitl",
+        "hitl_required": True,
+        "iteration_count": next_iteration_count,
+        "scratchpad": _append_scratchpad(
+            state,
+            "Critique marked output for HITL review.",
+        ),
+    }
+
+def critique_router(state: ResearchState) -> str:
+    """
+    Route after critique.
+    """
+
+    decision = state.get("critique_decision")
+
+    if decision == "accept":
+        return "end"
+
+    if decision == "retry_retriever":
+        return "retriever"
+
+    if decision == "retry_analyst":
+        return "analyst"
+
+    if decision == "hitl":
+        return "end"
+
+    return "end"
 
 
 def build_supervisor_graph():
@@ -59,4 +321,68 @@ def build_supervisor_graph():
     Returns:
         A compiled LangGraph that can be invoked with an initial state.
     """
-    raise NotImplementedError
+    graph = StateGraph(ResearchState)
+
+    graph.add_node("planner", planner_node)
+    graph.add_node("retriever", retriever_node)
+    graph.add_node("analyst", analyst_node)
+    graph.add_node("fact_checker", fact_checker_node)
+    graph.add_node("critique", critique_node)
+
+    graph.set_entry_point("planner")
+
+    graph.add_conditional_edges(
+        "planner",
+        router,
+        {
+            "retriever": "retriever",
+            "analyst": "analyst",
+            "fact_checker": "fact_checker",
+            "critique": "critique",
+        },
+    )
+
+    graph.add_conditional_edges(
+        "retriever",
+        router,
+        {
+            "retriever": "retriever",
+            "analyst": "analyst",
+            "fact_checker": "fact_checker",
+            "critique": "critique",
+        },
+    )
+
+    graph.add_conditional_edges(
+        "analyst",
+        router,
+        {
+            "retriever": "retriever",
+            "analyst": "analyst",
+            "fact_checker": "fact_checker",
+            "critique": "critique",
+        },
+    )
+
+    graph.add_conditional_edges(
+        "fact_checker",
+        router,
+        {
+            "retriever": "retriever",
+            "analyst": "analyst",
+            "fact_checker": "fact_checker",
+            "critique": "critique",
+        },
+    )
+
+    graph.add_conditional_edges(
+        "critique",
+        critique_router,
+        {
+            "retriever": "retriever",
+            "analyst": "analyst",
+            "end": END,
+        },
+    )
+
+    return graph.compile()
