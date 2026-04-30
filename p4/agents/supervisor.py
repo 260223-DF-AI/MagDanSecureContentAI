@@ -4,12 +4,15 @@ ResearchFlow — Supervisor Graph
 Builds and returns the main LangGraph StateGraph that orchestrates
 the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 """
+from __future__ import annotations
 
+import os
+from typing import Any 
+from pinecone import Pinecone
+from langgraph.graph import END, StateGraph
+from langchain_aws import BedrockEmbeddings
 from agents.state import PlanTask, ResearchState 
 
-from __future__ import annotations
-from typing import Any 
-from langgraph.graph import END, StateGraph
 
 try:
     from langgraph.types import interrupt
@@ -122,24 +125,41 @@ def _advance_plan(state: ResearchState, node_name: str) -> dict[str, Any]:
 
 def retriever_node(state: ResearchState) -> dict[str, Any]:
     """
-    Retriever node placeholder.
-
+    Retriever node placeholder - workable confidence
+    TODO: connect to acutal retriever agent (i think)
     Replace this section with your real Pinecone retriever agent call.
     """
-
-    task = state.get("current_task", {})
     question = state["user_question"]
+    task = state.get("current_task", {})
 
+    # 1. Embed the query
+    embedder = BedrockEmbeddings(model_id="amazon.titan-embed-text-v2:0")
+    query_vec = embedder.embed_query(question)
+
+    # 2. Query Pinecone
+    pc = Pinecone(os.getenv("PINECONE_API_KEY"))
+    index = pc.Index(os.getenv("PINECONE_INDEX_NAME"))
+
+    res = index.query(
+        vector=query_vec,
+        top_k=5,
+        include_metadata=True,
+        namespace="primary-corpus"
+    )
+
+    # 3. Convert Pinecone matches → LangChain Documents
     retrieved_chunks = [
         {
-            "text": f"Placeholder retrieved context for: {question}",
-            "source": "sample_source.pdf",
-            "page": 1,
-            "score": 0.88,
-            "task": task.get("description", ""),
+            "text": match["metadata"]["text"],
+            "source": match["metadata"].get("source"),
+            "chunk_id": match["id"],
+            "score": match["score"],
+            "task": task.get("description", "")
         }
+        for match in res["matches"]
     ]
 
+    # 4. Advance the plan
     updates = _advance_plan(state, "Retriever")
 
     return {
@@ -386,3 +406,23 @@ def build_supervisor_graph():
     )
 
     return graph.compile()
+
+def main():
+    # NOTE: This code is temporarily placed here. It demonstrates successful integration between Pinecone retrieval and supervisor agent. Replace the user_question and see what results you get!
+    app = build_supervisor_graph()
+
+    result = app.invoke({
+        "user_question": "What is utilitarianism?",
+        "scratchpad": []
+    })
+
+    print("\n=== FINAL ANSWER ===")
+    print(result.get("final_answer"))
+
+    print("\n=== RETRIEVED CHUNKS ===")
+    for c in result.get("retrieved_chunks", []):
+        print(f"- {c['chunk_id']} (score={c['score']:.3f})")
+
+if __name__ == "__main__":
+    main()
+    
