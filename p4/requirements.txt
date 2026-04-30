@@ -5,13 +5,13 @@ langchain-community>=0.3.0
 langgraph>=0.2.0
 
 # Vector Database
-pinecone-client>=5.0.0
+pinecone>=5.0.0
 
 # Embeddings
 sentence-transformers>=3.0.0
 
 # Evaluation
-ragas>=0.2.0
+ragas>=0.2.6
 
 # Observability
 langsmith>=0.1.0
