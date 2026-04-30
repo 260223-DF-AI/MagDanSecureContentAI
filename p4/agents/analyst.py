@@ -98,9 +98,9 @@ def _call_bedrock(prompt: str) -> str:
     Invoke Bedrock Claude model.
     """
     llm = ChatBedrockConverse(
-        model=os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0"),
+        model=os.getenv("BEDROCK_MODEL_ID"),
         temperature=0,
-        region_name=os.getenv("AWS_REGION", "us-east-1"),
+        region_name=os.getenv("AWS_REGION"),
     )
 
     response = llm.invoke([HumanMessage(content=prompt)])
