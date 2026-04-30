@@ -6,8 +6,11 @@ generates embeddings, and upserts them into a Pinecone index.
 
 Usage:
     python scripts/ingest.py --input-dir ./data/corpus --namespace primary-corpus
+     - OR -
+    python -m scripts.ingest --input-dir ./data/corpus --namespace primary-corpus
 """
 import os
+import time
 import argparse
 import logging
 from pinecone import Pinecone
@@ -52,25 +55,58 @@ def load_documents(input_dir: str) -> list:
     logger.info(f"Loading documents from: {input_dir}")
 
     # Loop through dir
-    for doc in input_dir:
-        try:
-            logger.debug(f"Loaded document: {doc}")
+    for root, dirs, files in os.walk(input_dir):
+        for filename in files:
+            doc = os.path.join(root, filename)
+            name = filename.replace("_", ":")
+            name = name.replace(" ", "_")
             
-            # Check file type
-            ext = os.path.splitext(doc)[1].lower()
-            if ext not in [".txt", ".pdf"]:
-                logger.warning(f"Skipping unsupported filetype: {doc}")
+            try:
+                logger.debug(f"Loaded document: {doc}")
+                
+                # Check file type
+                ext = os.path.splitext(doc)[1].lower()
+                if ext not in [".txt", ".pdf"]:
+                    logger.warning(f"Skipping unsupported filetype: {doc}")
+                    continue
+                
+                # -------------------------
+                # Handle TXT files
+                # -------------------------
+                if ext == ".txt":
+                    with open(doc, "r", encoding="utf-8") as f:
+                        text = f.read()
+
+                    docs.append(
+                        Document(
+                            page_content=text,
+                            metadata={
+                                "source": doc,
+                                "filename": name,
+                                "page_number": 1
+                            }
+                        )
+                    )
+                    continue
+                # -------------------------
+                # Handle PDF files
+                # -------------------------
+                if ext == ".pdf":
+                    loader = PyPDFLoader(doc)
+                    pdf_pages = loader.load()
+
+                    for page in pdf_pages:
+                        page.metadata["source"] = doc
+                        page.metadata["filename"] = name
+                    docs.extend(pdf_pages)
+                    continue
+                
+            except FileNotFoundError as e:
+                logger.error(f"File not found: {doc} — {e}")
                 continue
-            
-            old_metadata = doc.metadata
-            print("TESTING TO SEE METADATA CONTENTS: ",old_metadata) # temp to see contents
-            docs.append(Document(page_content=doc.page_content, meta_data=old_metadata)) # Add document to list
-        except FileNotFoundError as e:
-            logger.error(f"File not found: {doc} — {e}")
-            continue
-        except Exception as e:
-            logger.error(f"Error loading document {doc}: {e}")
-            continue
+            except Exception as e:
+                logger.error(f"Error loading document {doc}: {e}")
+                continue
     
     logger.info(f"Loaded {len(docs)} documents.")
     return docs
@@ -90,44 +126,39 @@ def chunk_documents(documents: list) -> list:
     for doc in documents:
         logger.debug(f"Chunking file: {doc}")
         try: 
-            with open(doc) as f:
-                text = f.read()
-
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1200,
                 chunk_overlap=200,
                 separators=["\n\n", "\n", ".", " ", ""]
             )
             # Split text
-            texts = text_splitter.split_text(text)
+            texts = text_splitter.split_text(doc.page_content)
             # Create list of Documents
             texts = [
-                add_chunk_metadata(d, {"source": doc, "chunk_num": n, "id": f"{doc}_chunk_{n}"}) for n, d in enumerate(texts)
+                add_chunk_metadata(d, doc.metadata, {"source": d, "chunk_num": n, "id": f"{doc.metadata['filename']}_chunk_{n}", "timestamp": int(time.time())}) for n, d in enumerate(texts)
             ] # Add chunk metadata
             
             chunks.extend(texts)
         except Exception as e:
-            logger.error(f"Error chunking {doc}: {e}")
+            logger.error(f"Error chunking {name}: {e}")
             continue
     
     logger.info(f"Generated {len(chunks)} total chunks.")
     return chunks
 
 
-def add_chunk_metadata(doc: str, new_metadata: dict) -> Document:
+def add_chunk_metadata(chunk_text: str, base_metadata: dict, new_metadata: dict) -> Document:
     """
-    Helper function to add metadata to a Document object
-
-    Args:
-        doc (str): text that needs metadata
-        new_metadata (dict): new metadata to add to given text
-
-    Returns:
-        Document: obj with new metadata
+    Helper function to create a new Document for a chunk of text, merging file-level and chunk-level metadata.
     """
-    old_metadata = doc.metadata
-    new_metadata = {**old_metadata, **new_metadata}
-    return Document(page_content = doc.page_content, metadata = new_metadata)
+    try:
+        merged = {**base_metadata, **new_metadata}
+        return Document(page_content=chunk_text, metadata=merged)
+
+    except Exception as e:
+        logger.error(f"add_chunk_metadata() failed. chunk_text={chunk_text[:50]}..., "
+                     f"base_metadata={base_metadata}, new_metadata={new_metadata}, error={e}")
+        raise
 
 
 def generate_embeddings(chunks: list) -> list:
@@ -139,7 +170,7 @@ def generate_embeddings(chunks: list) -> list:
     - Process in batches for efficiency (see W5 Monday — batch embedding).
     """
     embedder = BedrockEmbeddings(
-        model_id = "amazon.titan-embed-text-v1",
+        model_id = os.getenv("BEDROCK_EMBEDDING_MODEL_ID"),
         region_name = os.getenv("AWS_REGION")
     )
     BATCH_SIZE = 32
@@ -190,7 +221,7 @@ def upsert_to_pinecone(chunks: list, embeddings: list, namespace: str) -> None:
                 "text": chunk.page_content
             }
         })
-    logger.debug(f"Prepared {len(vectors)} vectors for upsert.")
+    logger.debug(f"Sample vector obj: {vectors[0]}")
     
     try:
         index.upsert(vectors=vectors, namespace=namespace)
@@ -202,6 +233,7 @@ def upsert_to_pinecone(chunks: list, embeddings: list, namespace: str) -> None:
 
 def main() -> None:
     """Orchestrate the full ingestion pipeline."""
+    logger.info("============== Starting ingest.py ==============")
     load_dotenv()
     args = parse_args()
 

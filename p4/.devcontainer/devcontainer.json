@@ -1,0 +1,17 @@
+{
+  "name": "ResearchFlow Dev",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspaces/p4",
+  "runArgs": [
+    "--env-file", ".env"
+  ],
+  "mounts": [
+    "source=${localWorkspaceFolder}/data,target=/app/data,type=bind"
+  ],
+  "remoteEnv": {
+    "PYTHONUNBUFFERED": "1"
+  }
+}
