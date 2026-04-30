@@ -5,8 +5,15 @@ Defines the TypedDict that flows through the Supervisor StateGraph.
 All nodes read from and write to this shared state.
 """
 
-from typing import TypedDict
+from typing import TypedDict, Any, Literal
 
+TaskType = Literal["retrieve", "analyze", "fact_check"]
+
+class PlanTask(TypedDict):
+    id: int
+    task_type: TaskType
+    description: str
+    status: Literal["pending", "complete"]
 
 class ResearchState(TypedDict):
     """
@@ -25,12 +32,31 @@ class ResearchState(TypedDict):
         scratchpad: Step-wise log of intermediate outputs for observability.
         user_id: Identifier for cross-thread memory via the Store interface.
     """
-    question: str
-    plan: list[str]
-    retrieved_chunks: list[dict]
-    analysis: dict
+    #question: str
+    #plan: list[str]
+    #retrieved_chunks: list[dict]
+    #analysis: dict
     fact_check_report: dict
     confidence_score: float
     iteration_count: int
     scratchpad: list[str]
     user_id: str
+
+    user_question: str
+    current_plan: list[PlanTask]
+    current_task_index: int
+    current_task: PlanTask | None
+
+    retrieved_chunks: list[dict[str, Any]]
+    analysis_output: dict[str, Any] | str
+    fact_check_results: dict[str, Any]
+
+    confidence_score: float
+    iteration_count: int
+    max_iterations: int
+
+    critique_decision: Literal["accept", "retry_retriever", "retry_analyst", "hitl"]
+    final_answer: str
+    hitl_required: bool
+
+    scratchpad: list[str]
