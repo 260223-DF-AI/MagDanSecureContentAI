@@ -14,7 +14,6 @@ import time
 import argparse
 import logging
 from pinecone import Pinecone
-from dotenv import load_dotenv
 from log_config import setup_logging
 from langchain_aws import BedrockEmbeddings
 from langchain_core.documents import Document
@@ -234,7 +233,6 @@ def upsert_to_pinecone(chunks: list, embeddings: list, namespace: str) -> None:
 def main() -> None:
     """Orchestrate the full ingestion pipeline."""
     logger.info("============== Starting ingest.py ==============")
-    load_dotenv()
     args = parse_args()
 
     documents = load_documents(args.input_dir)
