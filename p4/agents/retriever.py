@@ -57,7 +57,8 @@ def retriever_node(state: ResearchState) -> dict:
         vector=query_vec,
         top_k=12,
         include_metadata=True,
-        namespace="primary-corpus"
+        namespace="primary-corpus",
+        filter=metadata_filter
     )
 
     raw_matches = res.get("matches", [])
