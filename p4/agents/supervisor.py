@@ -6,10 +6,12 @@ the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 """
 from __future__ import annotations
 
-from typing import Any 
+from typing import Any, Dict
 from langgraph.graph import END, StateGraph
 from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
 from agents.retriever import retriever_node
+from agents.analyst import analyst_node
+
 try:
     from langgraph.types import interrupt
 except ImportError:
@@ -95,35 +97,6 @@ def router(state: ResearchState) -> str:
 
     return "critique"
 
-
-def analyst_node(state: ResearchState) -> dict[str, Any]:
-    """
-    Analyst node placeholder.
-
-    Replace this section with your real Bedrock analyst agent call.
-    """
-
-    chunks = state.get("retrieved_chunks", [])
-
-    analysis_output = {
-        "answer": "Placeholder synthesized answer based on retrieved context.",
-        "citations": [
-            {
-                "source": chunk.get("source"),
-                "page": chunk.get("page"),
-            }
-            for chunk in chunks
-        ],
-        "self_assessed_confidence": 0.8,
-    }
-
-    updates = _advance_plan(state, "Analyst")
-
-    return {
-        **updates,
-        "analysis_output": analysis_output,
-        "confidence_score": analysis_output["self_assessed_confidence"],
-    }
 
 def fact_checker_node(state: ResearchState) -> dict[str, Any]:
     """
