@@ -112,10 +112,10 @@ def _stream_bedrock(prompt: str):
     Streaming Bedrock response generator.
     """
     llm = ChatBedrockConverse(
-        model=os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0"),
+        model=os.getenv("BEDROCK_MODEL_ID"),
         temperature=0,
         streaming=True,
-        region_name=os.getenv("AWS_REGION", "us-east-1"),
+        region_name=os.getenv("AWS_REGION"),
     )
 
     for chunk in llm.stream([HumanMessage(content=prompt)]):
