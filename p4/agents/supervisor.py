@@ -11,7 +11,7 @@ Includes:
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from langgraph.graph import END, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
@@ -198,7 +198,7 @@ def critique_node(state: ResearchState) -> dict:
 
     next_iteration_count = iteration_count + 1
 
-    if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
+    if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD:
         analysis = state.get("analysis_output", {})
         final_answer = (
             analysis.get("answer", "")
@@ -234,34 +234,17 @@ def critique_node(state: ResearchState) -> dict:
         }
 
     if interrupt is not None:
-        human_feedback = interrupt(
-            {
-                "reason": "Low confidence or unsupported claims after max retries.",
-                "confidence_score": confidence,
-                "fact_check_results": fact_check_results,
-                "analysis_output": state.get("analysis_output", {}),
-            }
-        )
+        payload = _build_hitl_payload(state, confidence)
 
-        return {
-            "critique_decision": "hitl",
-            "hitl_required": True,
-            "final_answer": str(human_feedback),
-            "iteration_count": next_iteration_count,
-            "scratchpad": _append_scratchpad(
-                state,
-                "Critique escalated to HITL review.",
-            ),
-        }
+        human_feedback = interrupt(payload)  # PAUSES GRAPH HERE
 
+        # handle reviewer response
+        return _handle_human_feedback(state, human_feedback)
+
+    # fallback
     return {
         "critique_decision": "hitl",
         "hitl_required": True,
-        "iteration_count": next_iteration_count,
-        "scratchpad": _append_scratchpad(
-            state,
-            "Critique marked output for HITL review.",
-        ),
     }
 
 def critique_router(state: ResearchState) -> str:
@@ -286,7 +269,7 @@ def critique_router(state: ResearchState) -> str:
     return "end"
 
 
-def build_supervisor_graph():
+def build_supervisor_graph(checkpointer: Optional[Any] = None):
     """
     Construct and compile the Supervisor StateGraph.
 
@@ -364,7 +347,47 @@ def build_supervisor_graph():
         },
     )
 
-    return graph.compile()
+    # checkpointer enables HITL resume and time travel
+    return graph.compile(checkpointer = checkpointer or CHECKPOINTER)
+
+# ---------------------------------------------------------------------------
+# TIME TRAVEL HELPERS
+# ---------------------------------------------------------------------------
+
+def build_thread_config(thread_id: str) -> Dict[str, Any]:
+    """NEW: attach thread ID for checkpoint tracking"""
+    return {"configurable": {"thread_id": thread_id}}
+
+
+def resume_from_hitl(app, thread_id: str, feedback: Dict[str, Any]):
+    """
+    NEW:
+    Resume graph after interrupt()
+    """
+    if Command is None:
+        raise RuntimeError("Command not available")
+
+    return app.invoke(
+        Command(resume=feedback),
+        config=build_thread_config(thread_id),
+    )
+
+
+def get_history(app, thread_id: str):
+    """
+    NEW:
+    Get all checkpoints (for time travel)
+    """
+    return list(app.get_state_history(build_thread_config(thread_id)))
+
+
+def fork_from_checkpoint(app, checkpoint_config, updates: Dict[str, Any]):
+    """
+    NEW:
+    Rewind + modify + re-run graph
+    """
+    new_config = app.update_state(checkpoint_config, values=updates)
+    return app.invoke(None, config=new_config)
 
 def main():
     # NOTE: This code is temporarily placed here. It demonstrates successful integration between Pinecone retrieval and supervisor agent. Replace the user_question and see what results you get!
