@@ -7,11 +7,12 @@ the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 from __future__ import annotations
 
 import os
-from typing import Any 
+from typing import Any, Dict
 from pinecone import Pinecone
 from langgraph.graph import END, StateGraph
 from langchain_aws import BedrockEmbeddings
 from agents.state import PlanTask, ResearchState 
+from agents.analyst import analyst_node
 
 
 try:
@@ -165,35 +166,6 @@ def retriever_node(state: ResearchState) -> dict[str, Any]:
     return {
         **updates,
         "retrieved_chunks": retrieved_chunks,
-    }
-
-def analyst_node(state: ResearchState) -> dict[str, Any]:
-    """
-    Analyst node placeholder.
-
-    Replace this section with your real Bedrock analyst agent call.
-    """
-
-    chunks = state.get("retrieved_chunks", [])
-
-    analysis_output = {
-        "answer": "Placeholder synthesized answer based on retrieved context.",
-        "citations": [
-            {
-                "source": chunk.get("source"),
-                "page": chunk.get("page"),
-            }
-            for chunk in chunks
-        ],
-        "self_assessed_confidence": 0.8,
-    }
-
-    updates = _advance_plan(state, "Analyst")
-
-    return {
-        **updates,
-        "analysis_output": analysis_output,
-        "confidence_score": analysis_output["self_assessed_confidence"],
     }
 
 def fact_checker_node(state: ResearchState) -> dict[str, Any]:
