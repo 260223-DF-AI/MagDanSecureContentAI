@@ -60,3 +60,26 @@ class ResearchState(TypedDict):
     hitl_required: bool
 
     scratchpad: list[str]
+
+def _append_scratchpad(state: ResearchState, message: str) -> list[str]:
+    return [*state.get("scratchpad", []), message]
+
+def _advance_plan(state: ResearchState, node_name: str) -> dict[str, Any]:
+    plan = state.get("current_plan", [])
+    index = state.get("current_task_index", 0)
+
+    if index < len(plan):
+        plan[index]["status"] = "complete"
+
+    next_index = index + 1
+    next_task = plan[next_index] if next_index < len(plan) else None
+
+    return {
+        "current_plan": plan,
+        "current_task_index": next_index,
+        "current_task": next_task,
+        "scratchpad": _append_scratchpad(
+            state,
+            f"{node_name} completed task index {index}.",
+        ),
+    }
