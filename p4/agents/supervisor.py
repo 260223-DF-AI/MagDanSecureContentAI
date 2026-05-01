@@ -6,14 +6,10 @@ the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 """
 from __future__ import annotations
 
-import os
 from typing import Any 
-from pinecone import Pinecone
 from langgraph.graph import END, StateGraph
-from langchain_aws import BedrockEmbeddings
-from agents.state import PlanTask, ResearchState 
-
-
+from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
+from agents.retriever import retriever_node
 try:
     from langgraph.types import interrupt
 except ImportError:
@@ -21,10 +17,6 @@ except ImportError:
 
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
-
-def _append_scratchpad(state: ResearchState, message: str) -> list[str]:
-    return [*state.get("scratchpad", []), message]
-
 
 def planner_node(state: ResearchState) -> dict:
     """
@@ -103,69 +95,6 @@ def router(state: ResearchState) -> str:
 
     return "critique"
 
-def _advance_plan(state: ResearchState, node_name: str) -> dict[str, Any]:
-    plan = state.get("current_plan", [])
-    index = state.get("current_task_index", 0)
-
-    if index < len(plan):
-        plan[index]["status"] = "complete"
-
-    next_index = index + 1
-    next_task = plan[next_index] if next_index < len(plan) else None
-
-    return {
-        "current_plan": plan,
-        "current_task_index": next_index,
-        "current_task": next_task,
-        "scratchpad": _append_scratchpad(
-            state,
-            f"{node_name} completed task index {index}.",
-        ),
-    }
-
-def retriever_node(state: ResearchState) -> dict[str, Any]:
-    """
-    Retriever node placeholder - workable confidence
-    TODO: connect to acutal retriever agent (i think)
-    Replace this section with your real Pinecone retriever agent call.
-    """
-    question = state["user_question"]
-    task = state.get("current_task", {})
-
-    # 1. Embed the query
-    embedder = BedrockEmbeddings(model_id="amazon.titan-embed-text-v2:0")
-    query_vec = embedder.embed_query(question)
-
-    # 2. Query Pinecone
-    pc = Pinecone(os.getenv("PINECONE_API_KEY"))
-    index = pc.Index(os.getenv("PINECONE_INDEX_NAME"))
-
-    res = index.query(
-        vector=query_vec,
-        top_k=5,
-        include_metadata=True,
-        namespace="primary-corpus"
-    )
-
-    # 3. Convert Pinecone matches → LangChain Documents
-    retrieved_chunks = [
-        {
-            "text": match["metadata"]["text"],
-            "source": match["metadata"].get("source"),
-            "chunk_id": match["id"],
-            "score": match["score"],
-            "task": task.get("description", "")
-        }
-        for match in res["matches"]
-    ]
-
-    # 4. Advance the plan
-    updates = _advance_plan(state, "Retriever")
-
-    return {
-        **updates,
-        "retrieved_chunks": retrieved_chunks,
-    }
 
 def analyst_node(state: ResearchState) -> dict[str, Any]:
     """
@@ -421,7 +350,7 @@ def main():
 
     print("\n=== RETRIEVED CHUNKS ===")
     for c in result.get("retrieved_chunks", []):
-        print(f"- {c['chunk_id']} (score={c['score']:.3f})")
+        print(f"- {c['chunk_id']} (score={c['relevance_score']:.3f})")
 
 if __name__ == "__main__":
     main()

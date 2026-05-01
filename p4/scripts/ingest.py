@@ -14,7 +14,7 @@ import time
 import argparse
 import logging
 from pinecone import Pinecone
-from log_config import setup_logging
+from logs.log_config import setup_logging
 from langchain_aws import BedrockEmbeddings
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
