@@ -446,21 +446,110 @@ def build_supervisor_graph(checkpointer: Optional[Any] = None):
 
     return graph.compile(checkpointer=checkpointer or CHECKPOINTER)
 
+# time travel helpers
+def build_thread_config(thread_id: str) -> dict[str, Any]:
+    """
+    Every graph run that needs checkpointing must use a thread_id.
+    """
+    return {
+        "configurable": {
+            "thread_id": thread_id,
+        }
+    }
+
+def resume_from_hitl(
+    app: Any,
+    thread_id: str,
+    reviewer_feedback: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Resume the graph after interrupt() pauses execution.
+    """
+    if Command is None:
+        raise RuntimeError("Command is unavailable. Upgrade langgraph.")
+
+    return app.invoke(
+        Command(resume=reviewer_feedback),
+        config=build_thread_config(thread_id),
+    )
+
+def get_thread_history(app: Any, thread_id: str) -> list[Any]:
+    """
+    View all saved checkpoints for a graph thread.
+    """
+    return list(app.get_state_history(build_thread_config(thread_id)))
+
+def get_latest_thread_state(app: Any, thread_id: str) -> Any:
+    """
+    Get the latest checkpointed state.
+    """
+    return app.get_state(build_thread_config(thread_id))
+
+def fork_from_checkpoint(
+    app: Any,
+    checkpoint_config: dict[str, Any],
+    state_updates: dict[str, Any],
+    as_node: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Time travel.
+
+    Rewind to a previous checkpoint, apply updates, then continue execution.
+    """
+    if as_node:
+        fork_config = app.update_state(
+            checkpoint_config,
+            values=state_updates,
+            as_node=as_node,
+        )
+    else:
+        fork_config = app.update_state(
+            checkpoint_config,
+            values=state_updates,
+        )
+
+    return app.invoke(None, config=fork_config)
+
 def main():
     # NOTE: This code is temporarily placed here. It demonstrates successful integration between Pinecone retrieval and supervisor agent. Replace the user_question and see what results you get!
     app = build_supervisor_graph()
 
-    result = app.invoke({
-        "user_question": "What is utilitarianism?",
-        "scratchpad": []
-    })
+    # to test time travel and HITL
+    thread_id = "demo-thread"
+    config = build_thread_config(thread_id)
+
+    result = app.invoke(
+        {
+            "user_question": "What is utilitarianism?",
+            "scratchpad": [],
+            "iteration_count": 0,
+            "max_iterations": DEFAULT_MAX_ITERATIONS,
+        },
+        config=config,
+    )
 
     print("\n=== FINAL ANSWER ===")
     print(result.get("final_answer"))
 
     print("\n=== RETRIEVED CHUNKS ===")
     for c in result.get("retrieved_chunks", []):
-        print(f"- {c['chunk_id']} (score={c['relevance_score']:.3f})")
+        score = c.get("relevance_score", c.get("score", 0.0))
+        print(f"- {c.get('chunk_id')} (score={score:.3f})")
+
+    print("\n=== CHECKPOINT HISTORY ===")
+    history = get_thread_history(app, thread_id)
+    for i, checkpoint in enumerate(history):
+        print(f"{i}: next={checkpoint.next}")
+
+# HITL test/example:
+#result = resume_from_hitl(
+ #   app=app,
+  #  thread_id="demo-thread",
+   # reviewer_feedback={
+    #    "action": "revise",
+     #   "final_answer": "Human-approved corrected answer.",
+    #},
+#)
 
 if __name__ == "__main__":
     main()
