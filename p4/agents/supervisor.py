@@ -3,17 +3,12 @@ ResearchFlow — Supervisor Graph
 
 Builds and returns the main LangGraph StateGraph that orchestrates
 the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
-
-Includes:
-- HITL interrupt support
-- checkpointing
-- time travel/state replay helpers
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Optional
 from langgraph.graph import END, StateGraph
-from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
+from langgraph.checkpoint.memory import MemorySaver # enables checkpoint history / time travel
 from agents.retriever import retriever_node
 from agents.analyst import analyst_node
 from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
@@ -25,11 +20,11 @@ try:
     from langgraph.types import interrupt, Command
 except ImportError:
     interrupt = None
-    Command = None
+    Command = None # HITL pause/resume support
 
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
-CHECKPOINTER = MemorySaver() # global checkpointer that enables state persistance, HITL resume, time travel
+CHECKPOINTER = MemorySaver() # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
 
 def planner_node(state: ResearchState) -> dict:
     """
@@ -108,55 +103,6 @@ def router(state: ResearchState) -> str:
 
     return "critique"
 
-def _build_hitl_payload(state: ResearchState, confidence: float) -> Dict[str, Any]:
-    """
-    Creates the payload sent to the human reviewer.
-    """
-
-    return {
-        "reason": "Low confidence after retries",
-        "confidence_score": confidence,
-        "analysis_output": state.get("analysis_output"),
-        "fact_check_results": state.get("fact_check_results"),
-        "review_options": ["approve", "revise", "retry_retriever", "retry_analyst"],
-    }
-
-def _handle_human_feedback(state: ResearchState, feedback: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Converts reviewer decision into graph state updates.
-    """
-
-    action = feedback.get("action", "approve")
-
-    if action == "approve":
-        return {
-            "critique_decision": "accept",
-            "final_answer": state.get("analysis_output", {}).get("answer", ""),
-            "hitl_required": False,
-        }
-
-    if action == "revise":
-        return {
-            "critique_decision": "accept",
-            "final_answer": feedback.get("final_answer", ""),
-            "hitl_required": False,
-        }
-
-    if action == "retry_retriever":
-        return {
-            "critique_decision": "retry_retriever",
-            "current_task_index": 0,
-            "current_task": state["current_plan"][0],
-        }
-
-    if action == "retry_analyst":
-        return {
-            "critique_decision": "retry_analyst",
-            "current_task_index": 1,
-            "current_task": state["current_plan"][1],
-        }
-
-    return {"critique_decision": "hitl"}
 
 def fact_checker_node(state: ResearchState) -> dict[str, Any]:
     """
@@ -180,6 +126,140 @@ def fact_checker_node(state: ResearchState) -> dict[str, Any]:
         "fact_check_results": fact_check_results,
     }
 
+def _get_final_answer_from_state(state: ResearchState) -> str:
+    """
+    NEW: Safely extract the best available final answer from analysis_output.
+    Prevents final_answer from becoming None.
+    """
+    analysis = state.get("analysis_output", {})
+
+    if isinstance(analysis, dict):
+        return analysis.get("answer", "")
+
+    return str(analysis)
+
+
+def _safe_plan_task(state: ResearchState, index: int):
+    """
+    NEW: Safely fetch a task from the current plan.
+    Prevents index errors during HITL retries.
+    """
+    plan = state.get("current_plan", [])
+
+    if index < len(plan):
+        return plan[index]
+
+    return None
+
+
+def _build_hitl_payload(
+    state: ResearchState,
+    confidence: float,
+    unsupported_claims: list[Any],
+) -> dict[str, Any]:
+    """
+    NEW: Payload shown to the human reviewer when the graph pauses.
+    """
+    return {
+        "reason": "Low confidence or unsupported claims after max retries.",
+        "confidence_score": confidence,
+        "unsupported_claims": unsupported_claims,
+        "analysis_output": state.get("analysis_output", {}),
+        "fact_check_results": state.get("fact_check_results", {}),
+        "retrieved_chunks": state.get("retrieved_chunks", []),
+        "review_options": {
+            "approve": "Accept the generated answer.",
+            "revise": "Provide a corrected final_answer.",
+            "retry_retriever": "Send graph back to retrieval.",
+            "retry_analyst": "Send graph back to analysis.",
+        },
+    }
+
+
+def _handle_human_feedback(
+    state: ResearchState,
+    human_feedback: Any,
+    next_iteration_count: int,
+) -> dict[str, Any]:
+    """
+    NEW: Converts reviewer feedback into graph state updates.
+    """
+
+    if not isinstance(human_feedback, dict):
+        return {
+            "critique_decision": "accept",
+            "hitl_required": False,
+            "final_answer": str(human_feedback),
+            "iteration_count": next_iteration_count,
+            "scratchpad": _append_scratchpad(
+                state,
+                "Human reviewer returned plain text feedback.",
+            ),
+        }
+
+    action = human_feedback.get("action", "approve")
+    feedback_text = human_feedback.get("feedback", "")
+
+    if action == "approve":
+        return {
+            "critique_decision": "accept",
+            "hitl_required": False,
+            "final_answer": _get_final_answer_from_state(state),
+            "iteration_count": next_iteration_count,
+            "scratchpad": _append_scratchpad(
+                state,
+                "Human reviewer approved the generated answer.",
+            ),
+        }
+
+    if action == "revise":
+        return {
+            "critique_decision": "accept",
+            "hitl_required": False,
+            "final_answer": human_feedback.get("final_answer", ""),
+            "iteration_count": next_iteration_count,
+            "scratchpad": _append_scratchpad(
+                state,
+                "Human reviewer revised the final answer.",
+            ),
+        }
+
+    if action == "retry_retriever":
+        return {
+            "critique_decision": "retry_retriever",
+            "hitl_required": False,
+            "iteration_count": next_iteration_count,
+            "current_task_index": 0,
+            "current_task": _safe_plan_task(state, 0),
+            "scratchpad": _append_scratchpad(
+                state,
+                f"Human reviewer requested retriever retry. Feedback: {feedback_text}",
+            ),
+        }
+
+    if action == "retry_analyst":
+        return {
+            "critique_decision": "retry_analyst",
+            "hitl_required": False,
+            "iteration_count": next_iteration_count,
+            "current_task_index": 1,
+            "current_task": _safe_plan_task(state, 1),
+            "scratchpad": _append_scratchpad(
+                state,
+                f"Human reviewer requested analyst retry. Feedback: {feedback_text}",
+            ),
+        }
+
+    return {
+        "critique_decision": "hitl",
+        "hitl_required": True,
+        "iteration_count": next_iteration_count,
+        "final_answer": _get_final_answer_from_state(state),
+        "scratchpad": _append_scratchpad(
+            state,
+            f"Unknown HITL action received: {action}",
+        ),
+    }
 
 def critique_node(state: ResearchState) -> dict:
     """
@@ -201,7 +281,7 @@ def critique_node(state: ResearchState) -> dict:
 
     next_iteration_count = iteration_count + 1
 
-    if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD:
+    if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
         analysis = state.get("analysis_output", {})
         final_answer = (
             analysis.get("answer", "")
@@ -236,18 +316,32 @@ def critique_node(state: ResearchState) -> dict:
             ),
         }
 
+    # HITL escalation after retries are exhausted.
     if interrupt is not None:
-        payload = _build_hitl_payload(state, confidence)
+        payload = _build_hitl_payload(
+            state=state,
+            confidence=confidence,
+            unsupported_claims=unsupported_claims,
+        )
 
-        human_feedback = interrupt(payload)  # PAUSES GRAPH HERE
+        human_feedback = interrupt(payload)
 
-        # handle reviewer response
-        return _handle_human_feedback(state, human_feedback)
+        return _handle_human_feedback(
+            state=state,
+            human_feedback=human_feedback,
+            next_iteration_count=next_iteration_count,
+        )
 
-    # fallback
+    # fallback when interrupt is unavailable.
     return {
         "critique_decision": "hitl",
         "hitl_required": True,
+        "final_answer": _get_final_answer_from_state(state),
+        "iteration_count": next_iteration_count,
+        "scratchpad": _append_scratchpad(
+            state,
+            "Critique marked output for HITL review, but interrupt is unavailable.",
+        ),
     }
 
 def critique_router(state: ResearchState) -> str:
@@ -350,47 +444,7 @@ def build_supervisor_graph(checkpointer: Optional[Any] = None):
         },
     )
 
-    # checkpointer enables HITL resume and time travel
-    return graph.compile(checkpointer = checkpointer or CHECKPOINTER)
-
-# ---------------------------------------------------------------------------
-# TIME TRAVEL HELPERS
-# ---------------------------------------------------------------------------
-
-def build_thread_config(thread_id: str) -> Dict[str, Any]:
-    """NEW: attach thread ID for checkpoint tracking"""
-    return {"configurable": {"thread_id": thread_id}}
-
-
-def resume_from_hitl(app, thread_id: str, feedback: Dict[str, Any]):
-    """
-    NEW:
-    Resume graph after interrupt()
-    """
-    if Command is None:
-        raise RuntimeError("Command not available")
-
-    return app.invoke(
-        Command(resume=feedback),
-        config=build_thread_config(thread_id),
-    )
-
-
-def get_history(app, thread_id: str):
-    """
-    NEW:
-    Get all checkpoints (for time travel)
-    """
-    return list(app.get_state_history(build_thread_config(thread_id)))
-
-
-def fork_from_checkpoint(app, checkpoint_config, updates: Dict[str, Any]):
-    """
-    NEW:
-    Rewind + modify + re-run graph
-    """
-    new_config = app.update_state(checkpoint_config, values=updates)
-    return app.invoke(None, config=new_config)
+    return graph.compile(checkpointer=checkpointer or CHECKPOINTER)
 
 def main():
     # NOTE: This code is temporarily placed here. It demonstrates successful integration between Pinecone retrieval and supervisor agent. Replace the user_question and see what results you get!
@@ -410,4 +464,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
     
