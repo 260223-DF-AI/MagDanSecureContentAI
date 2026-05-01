@@ -6,16 +6,17 @@ response using AWS Bedrock, with Pydantic-validated output.
 """
 from typing import List, Optional, Dict, Any
 import os
+import re
 import json
-
+import logging
+from logs.log_config import setup_logging
 from pydantic import BaseModel, ValidationError
-
 from langchain_aws import ChatBedrockConverse
 from langchain_core.messages import HumanMessage
+from agents.state import ResearchState, _advance_plan, _append_scratchpad
 
-from agents.state import ResearchState
-
-
+setup_logging()
+logger = logging.getLogger("researchflow.analyst")
 # ---------------------------------------------------------------------------
 # Structured Output Schema
 # ---------------------------------------------------------------------------
@@ -36,23 +37,30 @@ class AnalysisResult(BaseModel):
 # ---------------------------------------------------------------------------
 # Helper Functions
 # ---------------------------------------------------------------------------
-
-def _append_scratchpad(state: ResearchState, message: str) -> List[str]:
-    return state.get("scratchpad", []) + [message]
-
-
 def _format_chunks(chunks: List[Dict[str, Any]]) -> str:
     """
     Convert retrieved chunks into a prompt-friendly string.
     """
+    if not chunks:
+        return "No retrieved context was provided."
+
     formatted = []
-    for i, chunk in enumerate(chunks):
-        formatted.append(
-            f"[Chunk {i+1}] "
-            f"Source: {chunk.get('source')} | "
-            f"Page: {chunk.get('page', 'N/A')}\n"
-            f"{chunk.get('text')}\n"
+
+    for i, chunk in enumerate(chunks, start=1):
+        text = (
+            chunk.get("text")
+            or chunk.get("content")
+            or chunk.get("page_content")
+            or ""
         )
+
+        formatted.append(
+            f"[Chunk {i}]\n"
+            f"source: {chunk.get('source')}\n"
+            f"page_number: {chunk.get('page', 'null')}\n"
+            f"{text}\n"
+        )
+
     return "\n".join(formatted)
 
 
@@ -63,35 +71,50 @@ def _build_prompt(question: str, task: str, context: str) -> str:
     return f"""
 You are an expert research analyst.
 
-TASK:
-{task}
-
 QUESTION:
 {question}
+
+TASK:
+{task}
 
 CONTEXT:
 {context}
 
-INSTRUCTIONS:
-- Answer the question using ONLY the provided context.
-- Provide citations (source + page_number if available).
-- Include short supporting excerpts.
-- Provide a confidence score between 0 and 1.
+Return ONLY valid JSON.
 
-OUTPUT FORMAT (STRICT JSON):
+NO markdown.
+NO explanations.
+NO code fences.
+
+FORMAT:
 {{
   "answer": "...",
   "citations": [
     {{
       "source": "...",
-      "page_number": 1,
+      "page_number": null,
       "excerpt": "..."
     }}
   ],
-  "confidence": 0.0
+  "confidence": 0.85
 }}
 """
 
+# normalized text extraction for various chunk formats into plain string
+def _extract_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, dict):
+                parts.append(item.get("text", ""))
+            else:
+                parts.append(getattr(item, "text", ""))
+        return "\n".join(parts)
+
+    return str(content)
 
 def _call_bedrock(prompt: str) -> str:
     """
@@ -104,39 +127,55 @@ def _call_bedrock(prompt: str) -> str:
     )
 
     response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    return _extract_text(response.content)
 
+# strips markdown and extracts JSON from mixed output
+def _extract_json(raw: str) -> Dict[str, Any]:
+    raw = raw.strip()
 
-def _stream_bedrock(prompt: str):
-    """
-    Streaming Bedrock response generator.
-    """
-    llm = ChatBedrockConverse(
-        model=os.getenv("BEDROCK_MODEL_ID"),
-        temperature=0,
-        streaming=True,
-        region_name=os.getenv("AWS_REGION"),
+    # remove ```json blocks
+    raw = re.sub(r"^```.*?\n", "", raw, flags=re.DOTALL)
+    raw = re.sub(r"```$", "", raw)
+
+    try:
+        return json.loads(raw)
+    except:
+        pass
+
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if match:
+        return json.loads(match.group(0))
+
+    raise json.JSONDecodeError("No JSON found", raw, 0)
+
+# always returns valid structured result
+def _fallback(raw_output: str, chunks: List[Dict[str, Any]]) -> AnalysisResult:
+    citations = []
+
+    for chunk in chunks[:2]:
+        citations.append(
+            Citation(
+                source=chunk.get("source", "unknown"),
+                page_number=chunk.get("page"),
+                excerpt=(chunk.get("text") or "")[:200],
+            )
+        )
+
+    return AnalysisResult(
+        answer=raw_output.strip() or "Unable to generate structured answer.",
+        citations=citations,
+        confidence=0.6,
     )
 
-    for chunk in llm.stream([HumanMessage(content=prompt)]):
-        if hasattr(chunk, "content") and chunk.content:
-            yield chunk.content
-
-
-def _parse_response(raw_output: str) -> AnalysisResult:
-    """
-    Parse and validate LLM output.
-    """
+def _parse_response(raw_output: str, chunks: List[Dict[str, Any]]) -> AnalysisResult:
     try:
-        data = json.loads(raw_output)
-        return AnalysisResult(**data)
-    except (json.JSONDecodeError, ValidationError):
-        # Fallback if model fails formatting
-        return AnalysisResult(
-            answer=raw_output.strip(),
-            citations=[],
-            confidence=0.5,
-        )
+        data = _extract_json(raw_output)
+        return AnalysisResult.model_validate(data)
+
+    # fallback instead of failing
+    except (json.JSONDecodeError, ValidationError) as e:
+        logger.warning(f"[Analyst] Failed structured parse: {e}")
+        return _fallback(raw_output, chunks)
 
 # ---------------------------------------------------------------------------
 # Agent Node
@@ -158,40 +197,30 @@ def analyst_node(state: ResearchState) -> Dict[str,Any]:
         and "confidence_score" updated from the model's self-assessment.
     """
     question = state.get("user_question", "")
-    task = state.get("current_task", {}).get("description", "")
+    task = state.get("current_task") or {}
+    task_desc = task.get("description", "Analyze retrieved content")
+
     chunks = state.get("retrieved_chunks", [])
 
     context = _format_chunks(chunks)
-    prompt = _build_prompt(question, task, context)
 
-    streaming_enabled = os.getenv("ANALYST_STREAMING", "false").lower() == "true"
+    # FIX: pass correct variable
+    prompt = _build_prompt(question, task_desc, context)
 
-    if streaming_enabled:
-        full_output = ""
-        for token in _stream_bedrock(prompt):
-            print(token, end="", flush=True)  # real-time feedback
-            full_output += token
-        raw_output = full_output
-    else:
-        raw_output = _call_bedrock(prompt)
+    logger.info(f"[Analyst] Starting analyst for: {question}")
 
-    result = _parse_response(raw_output)
+    raw_output = _call_bedrock(prompt)
 
-    # Advance plan
-    plan = state.get("current_plan", [])
-    index = state.get("current_task_index", 0)
+    result = _parse_response(raw_output, chunks)
 
-    if index < len(plan):
-        plan[index]["status"] = "complete"
+    logger.info(f"[Analyst] Confidence: {result.confidence}")
 
-    next_index = index + 1
-    next_task = plan[next_index] if next_index < len(plan) else None
+    # advance plan
+    plan_updates = _advance_plan(state, "analyst")
 
     return {
-        "current_plan": plan,
-        "current_task_index": next_index,
-        "current_task": next_task,
-        "analysis_output": result.dict(),
+        **plan_updates,
+        "analysis_output": result.model_dump(),
         "confidence_score": result.confidence,
         "scratchpad": _append_scratchpad(
             state,

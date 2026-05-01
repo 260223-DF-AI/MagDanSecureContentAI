@@ -11,12 +11,15 @@ Includes:
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from langgraph.graph import END, StateGraph
-from langgraph.checkpoint.memory import MemorySaver
 from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
 from agents.retriever import retriever_node
 from agents.analyst import analyst_node
+from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
+
+from dotenv import load_dotenv
+load_dotenv()
 
 try:
     from langgraph.types import interrupt, Command

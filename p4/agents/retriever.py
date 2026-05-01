@@ -13,7 +13,7 @@ from langchain_aws import BedrockEmbeddings
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
 
 setup_logging()
-logger = logging.getLogger("researchflow.ingest")
+logger = logging.getLogger("researchflow.retriever")
 
 def retriever_node(state: ResearchState) -> dict:
     """
@@ -57,7 +57,8 @@ def retriever_node(state: ResearchState) -> dict:
         vector=query_vec,
         top_k=12,
         include_metadata=True,
-        namespace="primary-corpus"
+        namespace="primary-corpus",
+        filter=metadata_filter
     )
 
     raw_matches = res.get("matches", [])
@@ -77,6 +78,7 @@ def retriever_node(state: ResearchState) -> dict:
     
     # 4. Re-rank (highest to lowest score)
     reranked = sorted(compressed, key=lambda x: x["relevance_score"], reverse=True)
+    # TODO: refactor reranking to include fact-checker results. 
     retrieved_chunks = reranked[:5]
     logger.info(f"[Retriever] Returning top {len(retrieved_chunks)} re-ranked chunks")
     
@@ -105,3 +107,16 @@ def compress(text: str, max_len: int = 500) -> str:
     if len(text) <= max_len:
         return text
     return text[:max_len] + "..."
+
+# TODO: refactor compression to use LLM + preserve relevant contexts
+# def compress(text: str, question: str, llm, max_tokens=150):
+#     prompt = f"""
+#     Extract only the sentences that directly help answer the question:
+#     '{question}'.
+
+#     Keep the extracted text under {max_tokens} tokens.
+#     Do not summarize — extract verbatim sentences only.
+#     Text:
+#     {text}
+#     """
+#     return llm.invoke(prompt).strip()
