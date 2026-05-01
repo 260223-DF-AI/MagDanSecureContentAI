@@ -9,7 +9,8 @@ import os
 import logging
 from pinecone import Pinecone
 from logs.log_config import setup_logging
-from langchain_aws import BedrockEmbeddings
+from langchain_core.messages import HumanMessage
+from langchain_aws import BedrockEmbeddings, ChatBedrock
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
 
 setup_logging()
@@ -64,23 +65,35 @@ def retriever_node(state: ResearchState) -> dict:
     raw_matches = res.get("matches", [])
     logger.info(f"[Retriever] Retrieved {len(raw_matches)} raw matches")
     
-    # 3. Apply context compression
-    compressed = []
-    for m in raw_matches:
-        md = m["metadata"]
-
-        compressed.append({
-            "chunk_id": md.get("id"),
-            "content": compress(md.get("text", "")),
-            "relevance_score": float(m.get("score", 0.0)),
-            "source": md.get("source"),
-        })
+    # 3. Re-rank results
+    docs_for_rerank = [
+    {"text": m["metadata"]["text"]}
+    for m in raw_matches]
+    reranked = pc.inference.rerank(
+        model="pinecone-rerank-v0",
+        query=question,
+        documents=docs_for_rerank,
+        top_n=5,
+        rank_fields=["text"]
+    )
     
-    # 4. Re-rank (highest to lowest score)
-    reranked = sorted(compressed, key=lambda x: x["relevance_score"], reverse=True)
-    # TODO: refactor reranking to include fact-checker results. 
-    retrieved_chunks = reranked[:5]
-    logger.info(f"[Retriever] Returning top {len(retrieved_chunks)} re-ranked chunks")
+    # 4. Apply context compression
+    retrieved_chunks = []
+    for r in reranked.data:
+        original_index = r.index
+        match = raw_matches[original_index]
+        md = match["metadata"]
+    
+
+        retrieved_chunks.append({
+            "chunk_id": match["id"],
+            "content": _compress(md["text"], question),   # compression AFTER rerank
+            "relevance_score": r.score,
+            "source": md.get("source"),
+            "page_number": md.get("page_number"),
+        })
+            
+    logger.info(f"[Retriever] Returning top {len(retrieved_chunks)} re-ranked and compressed chunks")
     
     # 5. Log to scratchpad
     scratch_msg = (
@@ -100,23 +113,26 @@ def retriever_node(state: ResearchState) -> dict:
         "scratchpad": updates,
     }
 
-def compress(text: str, max_len: int = 500) -> str:
+def _compress(text: str, question: str, max_tokens=150):
     """
-    Helper function to compress long chunks
+    Helper method to compress chunk text preserving relevant context for the query. 
+    
+    Invokes Bedrock chat model for compression.
     """
-    if len(text) <= max_len:
-        return text
-    return text[:max_len] + "..."
+    prompt = f"""
+    Extract only the sentences that directly help answer the question:
+    '{question}'.
 
-# TODO: refactor compression to use LLM + preserve relevant contexts
-# def compress(text: str, question: str, llm, max_tokens=150):
-#     prompt = f"""
-#     Extract only the sentences that directly help answer the question:
-#     '{question}'.
-
-#     Keep the extracted text under {max_tokens} tokens.
-#     Do not summarize — extract verbatim sentences only.
-#     Text:
-#     {text}
-#     """
-#     return llm.invoke(prompt).strip()
+    Keep the extracted text under {max_tokens} tokens.
+    Do not summarize — extract verbatim sentences only.
+    Text:
+    {text}
+    """
+    
+    llm = ChatBedrock(
+        model=os.getenv("BEDROCK_MODEL_ID"),
+        temperature=0.1,
+        region_name=os.getenv("AWS_REGION"),
+    )
+    
+    return llm.invoke(prompt).content.strip()
