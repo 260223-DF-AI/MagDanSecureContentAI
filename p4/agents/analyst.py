@@ -7,15 +7,15 @@ response using AWS Bedrock, with Pydantic-validated output.
 from typing import List, Optional, Dict, Any
 import os
 import json
-
+import logging
+from logs.log_config import setup_logging
 from pydantic import BaseModel, ValidationError
-
 from langchain_aws import ChatBedrockConverse
 from langchain_core.messages import HumanMessage
+from agents.state import ResearchState, _advance_plan, _append_scratchpad
 
-from agents.state import ResearchState
-
-
+setup_logging()
+logger = logging.getLogger("researchflow.analyst")
 # ---------------------------------------------------------------------------
 # Structured Output Schema
 # ---------------------------------------------------------------------------
@@ -36,11 +36,6 @@ class AnalysisResult(BaseModel):
 # ---------------------------------------------------------------------------
 # Helper Functions
 # ---------------------------------------------------------------------------
-
-def _append_scratchpad(state: ResearchState, message: str) -> List[str]:
-    return state.get("scratchpad", []) + [message]
-
-
 def _format_chunks(chunks: List[Dict[str, Any]]) -> str:
     """
     Convert retrieved chunks into a prompt-friendly string.
@@ -158,13 +153,17 @@ def analyst_node(state: ResearchState) -> Dict[str,Any]:
         and "confidence_score" updated from the model's self-assessment.
     """
     question = state.get("user_question", "")
-    task = state.get("current_task", {}).get("description", "")
+    task = state.get("current_task", {})
+    task_desc = task.get("description")
     chunks = state.get("retrieved_chunks", [])
 
     context = _format_chunks(chunks)
     prompt = _build_prompt(question, task, context)
 
     streaming_enabled = os.getenv("ANALYST_STREAMING", "false").lower() == "true"
+
+    logger.info(f"[Analyst] Starting analyst for: {question}")
+    logger.debug(f"[Analyst] Current task: {task_desc}")
 
     if streaming_enabled:
         full_output = ""
@@ -178,23 +177,18 @@ def analyst_node(state: ResearchState) -> Dict[str,Any]:
     result = _parse_response(raw_output)
 
     # Advance plan
-    plan = state.get("current_plan", [])
-    index = state.get("current_task_index", 0)
-
-    if index < len(plan):
-        plan[index]["status"] = "complete"
-
-    next_index = index + 1
-    next_task = plan[next_index] if next_index < len(plan) else None
-
-    return {
-        "current_plan": plan,
-        "current_task_index": next_index,
-        "current_task": next_task,
-        "analysis_output": result.dict(),
-        "confidence_score": result.confidence,
-        "scratchpad": _append_scratchpad(
+    logger.info("Advancing plan...")
+    plan_updates = _advance_plan(state, "analyst")
+    
+    updates = _append_scratchpad(
             state,
             f"Analyst generated response with confidence {result.confidence}"
-        ),
+        )
+
+    return {
+        **plan_updates,
+        "analysis_output": result.model_dump(),
+        "confidence_score": result.confidence,
+        "scratchpad": updates,
     }
+

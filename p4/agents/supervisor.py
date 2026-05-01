@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 from langgraph.graph import END, StateGraph
-from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
 from agents.retriever import retriever_node
 from agents.analyst import analyst_node
+from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
 
 try:
     from langgraph.types import interrupt
