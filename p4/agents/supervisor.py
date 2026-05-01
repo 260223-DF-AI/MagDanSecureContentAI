@@ -3,22 +3,30 @@ ResearchFlow — Supervisor Graph
 
 Builds and returns the main LangGraph StateGraph that orchestrates
 the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
+
+Includes:
+- HITL interrupt support
+- checkpointing
+- time travel/state replay helpers
 """
 from __future__ import annotations
 
 from typing import Any, Dict
 from langgraph.graph import END, StateGraph
+from langgraph.checkpoint.memory import MemorySaver
 from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
 from agents.retriever import retriever_node
 from agents.analyst import analyst_node
 
 try:
-    from langgraph.types import interrupt
+    from langgraph.types import interrupt, Command
 except ImportError:
     interrupt = None
+    Command = None
 
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
+CHECKPOINTER = MemorySaver() # global checkpointer that enables state persistance, HITL resume, time travel
 
 def planner_node(state: ResearchState) -> dict:
     """
@@ -97,6 +105,55 @@ def router(state: ResearchState) -> str:
 
     return "critique"
 
+def _build_hitl_payload(state: ResearchState, confidence: float) -> Dict[str, Any]:
+    """
+    Creates the payload sent to the human reviewer.
+    """
+
+    return {
+        "reason": "Low confidence after retries",
+        "confidence_score": confidence,
+        "analysis_output": state.get("analysis_output"),
+        "fact_check_results": state.get("fact_check_results"),
+        "review_options": ["approve", "revise", "retry_retriever", "retry_analyst"],
+    }
+
+def _handle_human_feedback(state: ResearchState, feedback: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Converts reviewer decision into graph state updates.
+    """
+
+    action = feedback.get("action", "approve")
+
+    if action == "approve":
+        return {
+            "critique_decision": "accept",
+            "final_answer": state.get("analysis_output", {}).get("answer", ""),
+            "hitl_required": False,
+        }
+
+    if action == "revise":
+        return {
+            "critique_decision": "accept",
+            "final_answer": feedback.get("final_answer", ""),
+            "hitl_required": False,
+        }
+
+    if action == "retry_retriever":
+        return {
+            "critique_decision": "retry_retriever",
+            "current_task_index": 0,
+            "current_task": state["current_plan"][0],
+        }
+
+    if action == "retry_analyst":
+        return {
+            "critique_decision": "retry_analyst",
+            "current_task_index": 1,
+            "current_task": state["current_plan"][1],
+        }
+
+    return {"critique_decision": "hitl"}
 
 def fact_checker_node(state: ResearchState) -> dict[str, Any]:
     """
