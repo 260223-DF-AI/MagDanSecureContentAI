@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from langgraph.graph import END, StateGraph
 from langgraph.checkpoint.memory import MemorySaver # enables checkpoint history / time travel
+from agents.fact_checker import fact_checker_node
 from agents.retriever import retriever_node
 from agents.analyst import analyst_node
 from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
@@ -102,29 +103,6 @@ def router(state: ResearchState) -> str:
         return "fact_checker"
 
     return "critique"
-
-
-def fact_checker_node(state: ResearchState) -> dict[str, Any]:
-    """
-    Fact-checker node placeholder.
-
-    Replace this section with your real fact-checking agent call.
-    """
-
-    confidence = state.get("confidence_score", 0.0)
-
-    fact_check_results = {
-        "overall_verdict": "Supported" if confidence >= 0.75 else "Inconclusive",
-        "unsupported_claims": [],
-        "evidence": state.get("retrieved_chunks", []),
-    }
-
-    updates = _advance_plan(state, "Fact-checker")
-
-    return {
-        **updates,
-        "fact_check_results": fact_check_results,
-    }
 
 
 def _get_final_answer_from_state(state: ResearchState) -> str:
