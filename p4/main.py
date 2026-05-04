@@ -9,6 +9,7 @@ import argparse
 import os
 
 from dotenv import load_dotenv
+from agents.supervisor import build_supervisor_graph
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,6 +49,8 @@ def main() -> None:
     args = parse_args()
 
     # TODO: Initialize the Supervisor StateGraph
+    supervisor = build_supervisor_graph()
+
     # TODO: Build the initial graph state from args
     # TODO: Invoke the graph and collect the final state
     # TODO: Pretty-print the structured research report

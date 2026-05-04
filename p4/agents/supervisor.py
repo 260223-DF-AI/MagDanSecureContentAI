@@ -126,6 +126,7 @@ def fact_checker_node(state: ResearchState) -> dict[str, Any]:
         "fact_check_results": fact_check_results,
     }
 
+
 def _get_final_answer_from_state(state: ResearchState) -> str:
     """
     NEW: Safely extract the best available final answer from analysis_output.
@@ -261,6 +262,7 @@ def _handle_human_feedback(
         ),
     }
 
+
 def critique_node(state: ResearchState) -> dict:
     """
     Evaluate the aggregated response and decide: accept, retry, or escalate.
@@ -343,6 +345,7 @@ def critique_node(state: ResearchState) -> dict:
             "Critique marked output for HITL review, but interrupt is unavailable.",
         ),
     }
+
 
 def critique_router(state: ResearchState) -> str:
     """
@@ -457,6 +460,7 @@ def build_thread_config(thread_id: str) -> dict[str, Any]:
         }
     }
 
+
 def resume_from_hitl(
     app: Any,
     thread_id: str,
@@ -479,11 +483,13 @@ def get_thread_history(app: Any, thread_id: str) -> list[Any]:
     """
     return list(app.get_state_history(build_thread_config(thread_id)))
 
+
 def get_latest_thread_state(app: Any, thread_id: str) -> Any:
     """
     Get the latest checkpointed state.
     """
     return app.get_state(build_thread_config(thread_id))
+
 
 def fork_from_checkpoint(
     app: Any,
@@ -509,6 +515,7 @@ def fork_from_checkpoint(
         )
 
     return app.invoke(None, config=fork_config)
+
 
 def main():
     # NOTE: This code is temporarily placed here. It demonstrates successful integration between Pinecone retrieval and supervisor agent. Replace the user_question and see what results you get!
