@@ -5,22 +5,24 @@ Queries the Pinecone vector store using semantic search,
 applies context compression and re-ranking, and returns
 structured retrieval results to the Supervisor.
 """
-import os
+
 import logging
-from pinecone import Pinecone
-from logs.log_config import setup_logging
-from langchain_core.messages import HumanMessage
+import os
+
 from langchain_aws import BedrockEmbeddings, ChatBedrock
+from pinecone import Pinecone
+
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
+from logs.log_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger("researchflow.retriever")
+
 
 def retriever_node(state: ResearchState) -> dict:
     """
     Retrieve relevant document chunks for the current sub-task.
 
-    TODO:
     - Extract the current sub-task from state["plan"].
     - Query the Pinecone index with semantic search and metadata filters.
     - Apply context compression to reduce token noise.
@@ -31,11 +33,12 @@ def retriever_node(state: ResearchState) -> dict:
     Returns:
         Dict with "retrieved_chunks" key containing a list of dicts,
         each with: content, relevance_score, source, page_number.
+
     """
     question = state["user_question"]
     task = state.get("current_task", {})
     task_desc = task.get("description", "retrieve relevant chunks")
-    
+
     logger.info(f"[Retriever] Starting retrieval for: {question}")
     logger.debug(f"[Retriever] Current task: {task_desc}")
 
@@ -46,55 +49,56 @@ def retriever_node(state: ResearchState) -> dict:
     # 2. Query Pinecone
     pc = Pinecone(os.getenv("PINECONE_API_KEY"))
     index = pc.Index(os.getenv("PINECONE_INDEX_NAME"))
-    
+
     # simple filters to ensure data is valid
     metadata_filter = {
         "source": {"$exists": True},
         "text": {"$exists": True},
-        "page_number": {"$gte": 1}
-    }   
+        "page_number": {"$gte": 1},
+    }
 
     res = index.query(
         vector=query_vec,
         top_k=12,
         include_metadata=True,
         namespace="primary-corpus",
-        filter=metadata_filter
+        filter=metadata_filter,
     )
 
     raw_matches = res.get("matches", [])
     logger.info(f"[Retriever] Retrieved {len(raw_matches)} raw matches")
-    
+
     # 3. Re-rank results
-    docs_for_rerank = [
-    {"text": m["metadata"]["text"]}
-    for m in raw_matches]
+    docs_for_rerank = [{"text": m["metadata"]["text"]} for m in raw_matches]
     reranked = pc.inference.rerank(
         model="pinecone-rerank-v0",
         query=question,
         documents=docs_for_rerank,
         top_n=5,
-        rank_fields=["text"]
+        rank_fields=["text"],
     )
-    
+
     # 4. Apply context compression
     retrieved_chunks = []
     for r in reranked.data:
         original_index = r.index
         match = raw_matches[original_index]
         md = match["metadata"]
-    
 
-        retrieved_chunks.append({
-            "chunk_id": match["id"],
-            "content": _compress(md["text"], question),   # compression AFTER rerank
-            "relevance_score": r.score,
-            "source": md.get("source"),
-            "page_number": md.get("page_number"),
-        })
-            
-    logger.info(f"[Retriever] Returning top {len(retrieved_chunks)} re-ranked and compressed chunks")
-    
+        retrieved_chunks.append(
+            {
+                "chunk_id": match["id"],
+                "content": _compress(md["text"], question),  # compression AFTER rerank
+                "relevance_score": r.score,
+                "source": md.get("source"),
+                "page_number": md.get("page_number"),
+            }
+        )
+
+    logger.info(
+        f"[Retriever] Returning top {len(retrieved_chunks)} re-ranked and compressed chunks"
+    )
+
     # 5. Log to scratchpad
     scratch_msg = (
         f"Retriever executed task: '{task_desc}'. "
@@ -113,10 +117,11 @@ def retriever_node(state: ResearchState) -> dict:
         "scratchpad": updates,
     }
 
-def _compress(text: str, question: str, max_tokens=150):
+
+def _compress(text: str, question: str, max_tokens: int = 150) -> str:
     """
-    Helper method to compress chunk text preserving relevant context for the query. 
-    
+    Compress chunk text while preserving relevant context for the query.
+
     Invokes Bedrock chat model for compression.
     """
     prompt = f"""
@@ -128,11 +133,24 @@ def _compress(text: str, question: str, max_tokens=150):
     Text:
     {text}
     """
-    
-    llm = ChatBedrock(
-        model=os.getenv("BEDROCK_MODEL_ID"),
-        temperature=0.1,
-        region_name=os.getenv("AWS_REGION"),
-    )
-    
+
+    llm = _get_embedder()
+
     return llm.invoke(prompt).content.strip()
+
+
+def _get_embedder() -> ChatBedrock:
+    """Lazy-init so unit tests can monkeypatch before first call."""
+    _embedder = None
+    if _embedder is None:
+        _embedder = ChatBedrock(
+            model=os.getenv("BEDROCK_MODEL_ID"),
+            temperature=0.1,
+            region_name=os.getenv("AWS_REGION"),
+        )
+    return _embedder
+
+
+def _get_index() -> None:
+    """Lazy-init so unit tests can monkeypatch before first call."""
+    pass

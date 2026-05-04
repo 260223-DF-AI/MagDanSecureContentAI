@@ -5,15 +5,19 @@ Defines the TypedDict that flows through the Supervisor StateGraph.
 All nodes read from and write to this shared state.
 """
 
-from typing import TypedDict, Any, Literal
+from typing import Any, Literal, TypedDict
 
 TaskType = Literal["retrieve", "analyze", "fact_check"]
 
+
 class PlanTask(TypedDict):
+    """Structure of an agent task."""
+
     id: int
     task_type: TaskType
     description: str
     status: Literal["pending", "complete"]
+
 
 class ResearchState(TypedDict):
     """
@@ -32,10 +36,11 @@ class ResearchState(TypedDict):
         scratchpad: Step-wise log of intermediate outputs for observability.
         user_id: Identifier for cross-thread memory via the Store interface.
     """
-    #question: str
-    #plan: list[str]
-    #retrieved_chunks: list[dict]
-    #analysis: dict
+
+    # question: str
+    # plan: list[str]
+    # retrieved_chunks: list[dict]
+    # analysis: dict
     fact_check_report: dict
     confidence_score: float
     iteration_count: int
@@ -61,23 +66,28 @@ class ResearchState(TypedDict):
 
     scratchpad: list[str]
 
+
 def _append_scratchpad(state: ResearchState, message: str) -> list[str]:
     return [*state.get("scratchpad", []), message]
+
 
 def _advance_plan(state: ResearchState, node_name: str) -> dict[str, Any]:
     plan = state.get("current_plan", [])
     index = state.get("current_task_index", 0)
+    next_task, next_index = (None, None)
 
-    if index < len(plan):
-        plan[index]["status"] = "complete"
+    if isinstance(plan, list) and index < len(plan):
+        task = plan[index]
+        if isinstance(task, dict):
+            task["status"] = "complete"
 
-    next_index = index + 1
-    next_task = plan[next_index] if next_index < len(plan) else None
+        next_index = index + 1
+        next_task = plan[next_index] if next_index < len(plan) else None
 
     return {
         "current_plan": plan,
-        "current_task_index": next_index,
-        "current_task": next_task,
+        "current_task_index": next_index if next_index is not None else 0,
+        "current_task": next_task if next_task is not None else "",
         "scratchpad": _append_scratchpad(
             state,
             f"{node_name} completed task index {index}.",

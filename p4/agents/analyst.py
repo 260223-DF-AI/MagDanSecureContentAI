@@ -4,16 +4,19 @@ ResearchFlow — Analyst Agent
 Synthesizes retrieved context into a structured, cited research
 response using AWS Bedrock, with Pydantic-validated output.
 """
-from typing import List, Optional, Dict, Any
-import os
-import re
+
 import json
 import logging
-from logs.log_config import setup_logging
-from pydantic import BaseModel, ValidationError
+import os
+import re
+from typing import Any, Dict, List, Optional
+
 from langchain_aws import ChatBedrockConverse
 from langchain_core.messages import HumanMessage
+from pydantic import BaseModel, ValidationError
+
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
+from logs.log_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger("researchflow.analyst")
@@ -21,8 +24,10 @@ logger = logging.getLogger("researchflow.analyst")
 # Structured Output Schema
 # ---------------------------------------------------------------------------
 
+
 class Citation(BaseModel):
     """A single supporting citation."""
+
     source: str
     page_number: Optional[int] = None
     excerpt: str
@@ -30,17 +35,17 @@ class Citation(BaseModel):
 
 class AnalysisResult(BaseModel):
     """Pydantic model enforcing structured analyst output."""
+
     answer: str
     citations: List[Citation]
     confidence: float  # 0.0 – 1.0
+
 
 # ---------------------------------------------------------------------------
 # Helper Functions
 # ---------------------------------------------------------------------------
 def _format_chunks(chunks: List[Dict[str, Any]]) -> str:
-    """
-    Convert retrieved chunks into a prompt-friendly string.
-    """
+    """Convert retrieved chunks into a prompt-friendly string."""
     if not chunks:
         return "No retrieved context was provided."
 
@@ -48,10 +53,7 @@ def _format_chunks(chunks: List[Dict[str, Any]]) -> str:
 
     for i, chunk in enumerate(chunks, start=1):
         text = (
-            chunk.get("text")
-            or chunk.get("content")
-            or chunk.get("page_content")
-            or ""
+            chunk.get("text") or chunk.get("content") or chunk.get("page_content") or ""
         )
 
         formatted.append(
@@ -65,9 +67,7 @@ def _format_chunks(chunks: List[Dict[str, Any]]) -> str:
 
 
 def _build_prompt(question: str, task: str, context: str) -> str:
-    """
-    Build the LLM prompt enforcing structured JSON output.
-    """
+    """Build the LLM prompt enforcing structured JSON output."""
     return f"""
 You are an expert research analyst.
 
@@ -100,8 +100,9 @@ FORMAT:
 }}
 """
 
+
 # normalized text extraction for various chunk formats into plain string
-def _extract_text(content: Any) -> str:
+def _extract_text(content: str | list) -> str:
     if isinstance(content, str):
         return content
 
@@ -116,10 +117,9 @@ def _extract_text(content: Any) -> str:
 
     return str(content)
 
+
 def _call_bedrock(prompt: str) -> str:
-    """
-    Invoke Bedrock Claude model.
-    """
+    """Invoke Bedrock Claude model."""
     llm = ChatBedrockConverse(
         model=os.getenv("BEDROCK_MODEL_ID"),
         temperature=0,
@@ -128,6 +128,7 @@ def _call_bedrock(prompt: str) -> str:
 
     response = llm.invoke([HumanMessage(content=prompt)])
     return _extract_text(response.content)
+
 
 # strips markdown and extracts JSON from mixed output
 def _extract_json(raw: str) -> Dict[str, Any]:
@@ -139,14 +140,15 @@ def _extract_json(raw: str) -> Dict[str, Any]:
 
     try:
         return json.loads(raw)
-    except:
-        pass
+    except Exception as e:
+        logger.error(f"Unable to deserialize obj: \n {raw} \nto JSON: {e}")
 
     match = re.search(r"\{.*\}", raw, re.DOTALL)
     if match:
         return json.loads(match.group(0))
 
     raise json.JSONDecodeError("No JSON found", raw, 0)
+
 
 # always returns valid structured result
 def _fallback(raw_output: str, chunks: List[Dict[str, Any]]) -> AnalysisResult:
@@ -167,6 +169,7 @@ def _fallback(raw_output: str, chunks: List[Dict[str, Any]]) -> AnalysisResult:
         confidence=0.6,
     )
 
+
 def _parse_response(raw_output: str, chunks: List[Dict[str, Any]]) -> AnalysisResult:
     try:
         data = _extract_json(raw_output)
@@ -177,11 +180,13 @@ def _parse_response(raw_output: str, chunks: List[Dict[str, Any]]) -> AnalysisRe
         logger.warning(f"[Analyst] Failed structured parse: {e}")
         return _fallback(raw_output, chunks)
 
+
 # ---------------------------------------------------------------------------
 # Agent Node
 # ---------------------------------------------------------------------------
 
-def analyst_node(state: ResearchState) -> Dict[str,Any]:
+
+def analyst_node(state: ResearchState) -> Dict[str, Any]:
     """
     Synthesize retrieved chunks into a structured research response.
 
@@ -195,6 +200,7 @@ def analyst_node(state: ResearchState) -> Dict[str,Any]:
     Returns:
         Dict with "analysis" key containing the AnalysisResult as a dict,
         and "confidence_score" updated from the model's self-assessment.
+
     """
     question = state.get("user_question", "")
     task = state.get("current_task") or {}
@@ -223,7 +229,6 @@ def analyst_node(state: ResearchState) -> Dict[str,Any]:
         "analysis_output": result.model_dump(),
         "confidence_score": result.confidence,
         "scratchpad": _append_scratchpad(
-            state,
-            f"Analyst generated response with confidence {result.confidence}"
+            state, f"Analyst generated response with confidence {result.confidence}"
         ),
     }
