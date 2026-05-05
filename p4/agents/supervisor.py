@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 from langgraph.graph import END, StateGraph
-from langgraph.graph.graph import CompiledStateGraph
+from langgraph.graph import CompiledStateGraph
 from langgraph.checkpoint.memory import (
     MemorySaver,
 )  # enables checkpoint history / time travel
