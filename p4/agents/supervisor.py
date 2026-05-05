@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 from langgraph.graph import END, StateGraph
-from langgraph.graph import CompiledStateGraph
+#from langgraph.graph import CompiledStateGraph
 from langgraph.checkpoint.memory import (
     MemorySaver,
 )  # enables checkpoint history / time travel
@@ -24,6 +24,7 @@ load_dotenv()
 
 try:
     from langgraph.types import interrupt, Command
+    #interrupt = None
 except ImportError:
     interrupt = None
     Command = None  # HITL pause/resume support
@@ -205,7 +206,7 @@ def _handle_human_feedback(
         return {
             "critique_decision": "accept",
             "hitl_required": False,
-            "final_answer": str(human_feedback),
+            "final_answer": _get_final_answer_from_state(state),
             "iteration_count": next_iteration_count,
             "scratchpad": _append_scratchpad(
                 state,
@@ -480,7 +481,7 @@ def build_thread_config(thread_id: str) -> dict[str, Any]:
 
 
 def resume_from_hitl(
-    app: CompiledStateGraph,
+    app: Any,
     thread_id: str,
     reviewer_feedback: dict[str, Any],
 ) -> dict[str, Any]:
@@ -505,7 +506,7 @@ def get_latest_thread_state(app: Any, thread_id: str) -> Any:
 
 
 def fork_from_checkpoint(
-    app: CompiledStateGraph,
+    app: Any,
     checkpoint_config: dict[str, Any],
     state_updates: dict[str, Any],
     as_node: Optional[str] = None,
@@ -553,6 +554,18 @@ def main() -> None:
         },
         config=config,
     )
+
+    if result.get("hitl_required"):
+        print("\n=== HITL REQUIRED ===")
+
+        # simulate human approval
+        result = resume_from_hitl(
+            app=app,
+            thread_id=thread_id,
+            reviewer_feedback={
+                "action": "approve",
+            },
+        )
 
     print("\n=== FINAL ANSWER ===")
     print(result.get("final_answer"))
