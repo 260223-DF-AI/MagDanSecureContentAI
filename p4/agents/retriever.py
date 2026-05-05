@@ -9,11 +9,11 @@ structured retrieval results to the Supervisor.
 import logging
 import os
 
-from langchain_aws import BedrockEmbeddings, ChatBedrock
+from infrastructure.instances import _get_embedder, _get_llm
+from logs.log_config import setup_logging
 from pinecone import Pinecone
 
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
-from logs.log_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger("researchflow.retriever")
@@ -43,8 +43,8 @@ def retriever_node(state: ResearchState) -> dict:
     logger.debug(f"[Retriever] Current task: {task_desc}")
 
     # 1. Embed the query
-    embedder = BedrockEmbeddings(model_id="amazon.titan-embed-text-v2:0")
-    query_vec = embedder.embed_query(question)
+    _embedder = _get_embedder
+    query_vec = _embedder.embed_query(question)
 
     # 2. Query Pinecone
     pc = Pinecone(os.getenv("PINECONE_API_KEY"))
@@ -134,23 +134,6 @@ def _compress(text: str, question: str, max_tokens: int = 150) -> str:
     {text}
     """
 
-    llm = _get_embedder()
+    llm = _get_llm()
 
     return llm.invoke(prompt).content.strip()
-
-
-def _get_embedder() -> ChatBedrock:
-    """Lazy-init so unit tests can monkeypatch before first call."""
-    _embedder = None
-    if _embedder is None:
-        _embedder = ChatBedrock(
-            model=os.getenv("BEDROCK_MODEL_ID"),
-            temperature=0.1,
-            region_name=os.getenv("AWS_REGION"),
-        )
-    return _embedder
-
-
-def _get_index() -> None:
-    """Lazy-init so unit tests can monkeypatch before first call."""
-    pass

@@ -48,7 +48,7 @@ def main() -> None:
     load_dotenv()
     args = parse_args()
 
-    # TODO: Initialize the Supervisor StateGraph
+    # Initialize the Supervisor StateGraph
     supervisor = build_supervisor_graph()
 
     # TODO: Build the initial graph state from args

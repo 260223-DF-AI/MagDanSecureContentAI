@@ -54,10 +54,7 @@ class ResearchState(TypedDict):
 
     retrieved_chunks: list[dict[str, Any]]
     analysis_output: dict[str, Any] | str
-    fact_check_results: dict[str, Any]
-
-    confidence_score: float
-    iteration_count: int
+    # fact_check_results: dict[str, Any]
     max_iterations: int
 
     critique_decision: Literal["accept", "retry_retriever", "retry_analyst", "hitl"]

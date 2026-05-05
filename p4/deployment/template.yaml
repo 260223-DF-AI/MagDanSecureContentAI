@@ -7,7 +7,7 @@
 # Deploy with:  sam build && sam deploy --guided
 # =============================================================================
 
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: ResearchFlow — Adaptive Multi-Agent Research Assistant
 
@@ -18,18 +18,17 @@ Globals:
     Runtime: python3.11
 
 Resources:
-
   ResearchFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.lambda_handler
       CodeUri: .
       Description: Handles /research POST requests
-      # TODO: Add environment variables from .env.example
-      # Environment:
-      #   Variables:
-      #     PINECONE_API_KEY: !Ref PineconeApiKey
-      #     BEDROCK_MODEL_ID: !Ref BedrockModelId
+      # Add environment variables from .env.example
+      Environment:
+        Variables:
+          PINECONE_API_KEY: !Ref PineconeApiKey
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
       Events:
         ResearchApi:
           Type: Api

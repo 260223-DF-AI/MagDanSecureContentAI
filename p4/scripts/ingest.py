@@ -15,11 +15,11 @@ import logging
 import os
 import time
 
-import PyPDFLoader
+from pinecone import Pinecone
 from langchain_aws import BedrockEmbeddings
 from langchain_core.documents import Document
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from pinecone import Pinecone
 
 from logs.log_config import setup_logging
 
