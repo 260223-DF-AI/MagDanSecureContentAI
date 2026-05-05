@@ -32,8 +32,39 @@ DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
 CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
 
+# helper for self-refinement loop
+def _reset_task_for_retry(
+    state: ResearchState,
+    retry_target: str,
+) -> dict[str, Any]:
+    """
+    CHANGE:
+    Handles Plan-and-Execute self-refinement.
 
-def planner_node(state: ResearchState) -> dict:
+    - retry_retriever → restart full pipeline
+    - retry_analyst → reuse retrieval, redo analysis + fact-check
+    """
+
+    plan = state.get("current_plan", [])
+
+    for task in plan:
+        if retry_target == "retry_retriever":
+            task["status"] = "pending"
+        elif retry_target == "retry_analyst" and task["task_type"] in {
+            "analyze",
+            "fact_check",
+        }:
+            task["status"] = "pending"
+
+    next_index = 0 if retry_target == "retry_retriever" else 1
+
+    return {
+        "current_plan": plan,
+        "current_task_index": next_index,
+        "current_task": plan[next_index] if next_index < len(plan) else None,
+    }
+
+def planner_node(state: ResearchState) -> dict[str,Any]:
     """
     Decompose the user's question into actionable sub-tasks.
 
@@ -76,10 +107,12 @@ def planner_node(state: ResearchState) -> dict:
         "confidence_score": state.get("confidence_score", 0.0),
         "iteration_count": state.get("iteration_count", 0),
         "max_iterations": state.get("max_iterations", DEFAULT_MAX_ITERATIONS),
+        "critique_decision": "",
         "hitl_required": False,
         "scratchpad": _append_scratchpad(
             state,
-            f"Planner created {len(plan)} tasks for question: {question}",
+            #f"Planner created {len(plan)} tasks for question: {question}",
+            f"Plan-and-Execute created {len(plan)} tasks.",
         ),
     }
 
@@ -245,7 +278,7 @@ def _handle_human_feedback(
     }
 
 
-def critique_node(state: ResearchState) -> dict:
+def critique_node(state: ResearchState) -> dict[str,Any]:
     """
     Evaluate the aggregated response and decide: accept, retry, or escalate.
 
@@ -274,7 +307,8 @@ def critique_node(state: ResearchState) -> dict:
 
         return {
             "critique_decision": "accept",
-            "final_answer": final_answer,
+            #"final_answer": final_answer,
+            "final_answer": _get_final_answer_from_state(state),
             "iteration_count": next_iteration_count,
             "hitl_required": False,
             "scratchpad": _append_scratchpad(
@@ -283,10 +317,15 @@ def critique_node(state: ResearchState) -> dict:
             ),
         }
 
+    # self refinement loop
     if next_iteration_count < max_iterations:
         retry_target = "retry_retriever" if unsupported_claims else "retry_analyst"
 
+        # smarter retry selection
+        retry_updates = _reset_task_for_retry(state, retry_target)
+
         return {
+            **retry_updates,
             "critique_decision": retry_target,
             "iteration_count": next_iteration_count,
             "current_task_index": 0 if retry_target == "retry_retriever" else 1,
@@ -295,7 +334,9 @@ def critique_node(state: ResearchState) -> dict:
             else state.get("current_plan", [])[1],
             "scratchpad": _append_scratchpad(
                 state,
-                f"Critique requested refinement: {retry_target}.",
+                f"Self-refinement triggered → {retry_target} "
+                f"(confidence={confidence}, unsupported={len(unsupported_claims)})",
+                #f"Critique requested refinement: {retry_target}.",
             ),
         }
 
