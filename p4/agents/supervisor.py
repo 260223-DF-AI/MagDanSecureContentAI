@@ -4,27 +4,34 @@ ResearchFlow — Supervisor Graph
 Builds and returns the main LangGraph StateGraph that orchestrates
 the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
 from langgraph.graph import END, StateGraph
-from langgraph.checkpoint.memory import MemorySaver # enables checkpoint history / time travel
+from langgraph.graph.graph import CompiledStateGraph
+from langgraph.checkpoint.memory import (
+    MemorySaver,
+)  # enables checkpoint history / time travel
+from agents.fact_checker import fact_checker_node
 from agents.retriever import retriever_node
 from agents.analyst import analyst_node
-from agents.state import PlanTask, ResearchState, _append_scratchpad, _advance_plan
+from agents.state import PlanTask, ResearchState, _append_scratchpad
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 try:
     from langgraph.types import interrupt, Command
 except ImportError:
     interrupt = None
-    Command = None # HITL pause/resume support
+    Command = None  # HITL pause/resume support
 
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
-CHECKPOINTER = MemorySaver() # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
+CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
+
 
 def planner_node(state: ResearchState) -> dict:
     """
@@ -34,8 +41,8 @@ def planner_node(state: ResearchState) -> dict:
     - Use Bedrock LLM to analyze the question.
     - Return a list of sub-tasks (Plan-and-Execute pattern).
     - Write to the scratchpad for observability.
-    """
 
+    """
     question = state["user_question"]
 
     plan: list[PlanTask] = [
@@ -84,6 +91,7 @@ def router(state: ResearchState) -> str:
     TODO:
     - Inspect the current plan and state to choose the next node.
     - Return the node name as a string (used by add_conditional_edges).
+
     """
     current_task = state.get("current_task")
 
@@ -104,32 +112,10 @@ def router(state: ResearchState) -> str:
     return "critique"
 
 
-def fact_checker_node(state: ResearchState) -> dict[str, Any]:
-    """
-    Fact-checker node placeholder.
-
-    Replace this section with your real fact-checking agent call.
-    """
-
-    confidence = state.get("confidence_score", 0.0)
-
-    fact_check_results = {
-        "overall_verdict": "Supported" if confidence >= 0.75 else "Inconclusive",
-        "unsupported_claims": [],
-        "evidence": state.get("retrieved_chunks", []),
-    }
-
-    updates = _advance_plan(state, "Fact-checker")
-
-    return {
-        **updates,
-        "fact_check_results": fact_check_results,
-    }
-
-
 def _get_final_answer_from_state(state: ResearchState) -> str:
     """
-    NEW: Safely extract the best available final answer from analysis_output.
+    Safely extract the best available final answer from analysis_output.
+
     Prevents final_answer from becoming None.
     """
     analysis = state.get("analysis_output", {})
@@ -140,9 +126,10 @@ def _get_final_answer_from_state(state: ResearchState) -> str:
     return str(analysis)
 
 
-def _safe_plan_task(state: ResearchState, index: int):
+def _safe_plan_task(state: ResearchState, index: int) -> list[PlanTask] | None:
     """
-    NEW: Safely fetch a task from the current plan.
+    Safely fetch a task from the current plan.
+
     Prevents index errors during HITL retries.
     """
     plan = state.get("current_plan", [])
@@ -158,9 +145,7 @@ def _build_hitl_payload(
     confidence: float,
     unsupported_claims: list[Any],
 ) -> dict[str, Any]:
-    """
-    NEW: Payload shown to the human reviewer when the graph pauses.
-    """
+    """Payload shown to the human reviewer when the graph pauses."""
     return {
         "reason": "Low confidence or unsupported claims after max retries.",
         "confidence_score": confidence,
@@ -182,10 +167,7 @@ def _handle_human_feedback(
     human_feedback: Any,
     next_iteration_count: int,
 ) -> dict[str, Any]:
-    """
-    NEW: Converts reviewer feedback into graph state updates.
-    """
-
+    """Convert reviewer feedback into graph state updates."""
     if not isinstance(human_feedback, dict):
         return {
             "critique_decision": "accept",
@@ -273,6 +255,7 @@ def critique_node(state: ResearchState) -> dict:
     - If below threshold and iterations >= max, trigger HITL interrupt.
     - If above threshold, accept and route to END.
     - Increment iteration_count.
+
     """
     confidence = state.get("confidence_score", 0.0)
     iteration_count = state.get("iteration_count", 0)
@@ -286,9 +269,7 @@ def critique_node(state: ResearchState) -> dict:
     if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
         analysis = state.get("analysis_output", {})
         final_answer = (
-            analysis.get("answer", "")
-            if isinstance(analysis, dict)
-            else str(analysis)
+            analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis)
         )
 
         return {
@@ -348,10 +329,7 @@ def critique_node(state: ResearchState) -> dict:
 
 
 def critique_router(state: ResearchState) -> str:
-    """
-    Route after critique.
-    """
-
+    """Route after critique."""
     decision = state.get("critique_decision")
 
     if decision == "accept":
@@ -369,7 +347,7 @@ def critique_router(state: ResearchState) -> str:
     return "end"
 
 
-def build_supervisor_graph(checkpointer: Optional[Any] = None):
+def build_supervisor_graph(checkpointer: Optional[MemorySaver] = None) -> StateGraph:
     """
     Construct and compile the Supervisor StateGraph.
 
@@ -449,11 +427,10 @@ def build_supervisor_graph(checkpointer: Optional[Any] = None):
 
     return graph.compile(checkpointer=checkpointer or CHECKPOINTER)
 
+
 # time travel helpers
 def build_thread_config(thread_id: str) -> dict[str, Any]:
-    """
-    Every graph run that needs checkpointing must use a thread_id.
-    """
+    """Every graph run that needs checkpointing must use a thread_id."""
     return {
         "configurable": {
             "thread_id": thread_id,
@@ -462,13 +439,11 @@ def build_thread_config(thread_id: str) -> dict[str, Any]:
 
 
 def resume_from_hitl(
-    app: Any,
+    app: CompiledStateGraph,
     thread_id: str,
     reviewer_feedback: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Resume the graph after interrupt() pauses execution.
-    """
+    """Resume the graph after interrupt() pauses execution."""
     if Command is None:
         raise RuntimeError("Command is unavailable. Upgrade langgraph.")
 
@@ -477,22 +452,19 @@ def resume_from_hitl(
         config=build_thread_config(thread_id),
     )
 
+
 def get_thread_history(app: Any, thread_id: str) -> list[Any]:
-    """
-    View all saved checkpoints for a graph thread.
-    """
+    """View all saved checkpoints for a graph thread."""
     return list(app.get_state_history(build_thread_config(thread_id)))
 
 
 def get_latest_thread_state(app: Any, thread_id: str) -> Any:
-    """
-    Get the latest checkpointed state.
-    """
+    """Get the latest checkpointed state."""
     return app.get_state(build_thread_config(thread_id))
 
 
 def fork_from_checkpoint(
-    app: Any,
+    app: CompiledStateGraph,
     checkpoint_config: dict[str, Any],
     state_updates: dict[str, Any],
     as_node: Optional[str] = None,
@@ -517,8 +489,14 @@ def fork_from_checkpoint(
     return app.invoke(None, config=fork_config)
 
 
-def main():
-    # NOTE: This code is temporarily placed here. It demonstrates successful integration between Pinecone retrieval and supervisor agent. Replace the user_question and see what results you get!
+def main() -> None:
+    """
+    NOTE: This code is temporarily placed here.
+
+    It demonstrates successful integration between Pinecone retrieval
+    and supervisor agent.
+    Replace the user_question and see what results you get!
+    """
     app = build_supervisor_graph()
 
     # to test time travel and HITL
@@ -548,17 +526,16 @@ def main():
     for i, checkpoint in enumerate(history):
         print(f"{i}: next={checkpoint.next}")
 
+
 # HITL test/example:
-#result = resume_from_hitl(
- #   app=app,
-  #  thread_id="demo-thread",
-   # reviewer_feedback={
-    #    "action": "revise",
-     #   "final_answer": "Human-approved corrected answer.",
-    #},
-#)
+# result = resume_from_hitl(
+#   app=app,
+#  thread_id="demo-thread",
+# reviewer_feedback={
+#    "action": "revise",
+#   "final_answer": "Human-approved corrected answer.",
+# },
+# )
 
 if __name__ == "__main__":
     main()
-    
-    

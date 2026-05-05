@@ -1,0 +1,21 @@
+line-length = 88
+target-version = "py311"
+
+extend-exclude = ["HerSpace"]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import sorting
+    "D",   # pydocstyle (docstring rules)
+    "ANN", # flake8-annotations (type hints)
+]
+
+ignore = [
+    "D203", # choose either D203 or D211, not both
+    "D212", # choose either D213 or D212, not both
+    "D210",
+    "D400",
+    "D415"
+]
