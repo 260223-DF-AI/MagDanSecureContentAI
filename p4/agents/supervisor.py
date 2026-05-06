@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from dotenv import load_dotenv
 load_dotenv()
+import logging
 from langgraph.graph import END, StateGraph
 #from langgraph.graph import CompiledStateGraph
 from langgraph.checkpoint.memory import (
@@ -28,6 +29,7 @@ except ImportError:
     interrupt = None
     Command = None  # HITL pause/resume support
 
+logger = logging.getLogger("researchflow.supervisor")
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
 CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
@@ -53,6 +55,11 @@ def _trim_messages_sliding_window(
 
     trimmed_count = len(messages) - max_messages
     trimmed_messages = messages[-max_messages:]
+
+    logger.info(
+        "[Memory] Sliding window trimmed %s messages.",
+        trimmed_count,
+    )
 
     return {
         "messages": trimmed_messages,
@@ -132,6 +139,10 @@ def planner_node(state: ResearchState) -> dict[str,Any]:
 
     """
     question = state["user_question"]
+    logger.info(
+        "[Planner] Building plan for question: %s",
+        question,
+    )
 
     plan: list[PlanTask] = [
         {
@@ -196,6 +207,10 @@ def router(state: ResearchState) -> str:
         return "critique"
 
     task_type = current_task["task_type"]
+    logger.info(
+        "[Router] Routing task type: %s",
+        task_type,
+    )
 
     if task_type == "retrieve":
         return "retriever"
@@ -358,6 +373,12 @@ def critique_node(state: ResearchState) -> dict[str,Any]:
     iteration_count = state.get("iteration_count", 0)
     max_iterations = state.get("max_iterations", DEFAULT_MAX_ITERATIONS)
 
+    logger.info(
+        "[Critique] Evaluating response | confidence=%s | iteration=%s",
+        confidence,
+        iteration_count,
+    )
+
     fact_check_results = state.get("fact_check_results", {})
     unsupported_claims = fact_check_results.get("unsupported_claims", [])
 
@@ -393,6 +414,11 @@ def critique_node(state: ResearchState) -> dict[str,Any]:
     if next_iteration_count < max_iterations:
         retry_target = "retry_retriever" if unsupported_claims else "retry_analyst"
 
+        logger.warning(
+            "[Critique] Triggering self-refinement: %s",
+            retry_target,
+        )
+
         # smarter retry selection
         retry_updates = _reset_task_for_retry(state, retry_target)
 
@@ -425,6 +451,8 @@ def critique_node(state: ResearchState) -> dict[str,Any]:
 
     # HITL escalation after retries are exhausted.
     if interrupt is not None:
+        logger.warning("[Critique] Escalating to HITL review.")
+
         payload = _build_hitl_payload(
             state=state,
             confidence=confidence,
