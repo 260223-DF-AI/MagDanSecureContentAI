@@ -8,12 +8,15 @@ the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 from __future__ import annotations
 
 from typing import Any, Optional
-
+from pathlib import Path
 from dotenv import load_dotenv
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(PROJECT_ROOT / ".env")
+
 from langgraph.checkpoint.memory import (
     MemorySaver,
 )  # enables checkpoint history / time travel
-from langgraph.graph import END, CompiledStateGraph, StateGraph
+from langgraph.graph import END, StateGraph
 
 from agents.analyst import analyst_node
 from agents.fact_checker import fact_checker_node
@@ -475,7 +478,7 @@ def build_thread_config(thread_id: str) -> dict[str, Any]:
 
 
 def resume_from_hitl(
-    app: CompiledStateGraph,
+    app: Any,
     thread_id: str,
     reviewer_feedback: dict[str, Any],
 ) -> dict[str, Any]:
@@ -489,18 +492,18 @@ def resume_from_hitl(
     )
 
 
-def get_thread_history(app: CompiledStateGraph, thread_id: str) -> list[Any]:
+def get_thread_history(app: Any, thread_id: str) -> list[Any]:
     """View all saved checkpoints for a graph thread."""
     return list(app.get_state_history(build_thread_config(thread_id)))
 
 
-def get_latest_thread_state(app: CompiledStateGraph, thread_id: str) -> StateSnapshot:
+def get_latest_thread_state(app: Any, thread_id: str) -> StateSnapshot:
     """Get the latest checkpointed state."""
     return app.get_state(build_thread_config(thread_id))
 
 
 def fork_from_checkpoint(
-    app: CompiledStateGraph,
+    app: Any,
     checkpoint_config: dict[str, Any],
     state_updates: dict[str, Any],
     as_node: Optional[str] = None,
