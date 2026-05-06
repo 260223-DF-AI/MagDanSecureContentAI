@@ -23,15 +23,16 @@ from agents.state import PlanTask, ResearchState, _append_scratchpad
 load_dotenv()
 
 try:
-    from langgraph.types import Command, interrupt
+    from langgraph.types import Command, interrupt, StateSnapshot
     # interrupt = None
 except ImportError:
     interrupt = None
     Command = None  # HITL pause/resume support
+    StateSnapshot = None
 
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
-CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
+CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint  # noqa: E501
 
 
 # helper for self-refinement loop
@@ -297,7 +298,7 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
 
     if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
         # analysis = state.get("analysis_output", {})
-        # final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))
+        # final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))  # noqa: E501
 
         return {
             "critique_decision": "accept",
@@ -474,7 +475,7 @@ def build_thread_config(thread_id: str) -> dict[str, Any]:
 
 
 def resume_from_hitl(
-    app: Any,
+    app: CompiledStateGraph,
     thread_id: str,
     reviewer_feedback: dict[str, Any],
 ) -> dict[str, Any]:
@@ -493,7 +494,7 @@ def get_thread_history(app: CompiledStateGraph, thread_id: str) -> list[Any]:
     return list(app.get_state_history(build_thread_config(thread_id)))
 
 
-def get_latest_thread_state(app: CompiledStateGraph, thread_id: str) -> Any:
+def get_latest_thread_state(app: CompiledStateGraph, thread_id: str) -> StateSnapshot:
     """Get the latest checkpointed state."""
     return app.get_state(build_thread_config(thread_id))
 
