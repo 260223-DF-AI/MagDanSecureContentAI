@@ -8,8 +8,10 @@ a research question against the ingested document corpus.
 import argparse
 import os
 
-from agents.supervisor import build_supervisor_graph
+from agents.supervisor import DEFAULT_MAX_ITERATIONS, build_supervisor_graph
 from dotenv import load_dotenv
+from middleware.guardrails import detect_injection, sanitize_input
+from middleware.pii_masking import mask_pii
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,11 +52,32 @@ def main() -> None:
     args = parse_args()
 
     # Initialize the Supervisor StateGraph
-    supervisor = build_supervisor_graph()
+    app = build_supervisor_graph()
 
     # TODO: Build the initial graph state from args
+    question = args.question
+    if detect_injection(question):
+        raise ValueError("Input rejected: possible prompt injection")
+    question = sanitize_input(question)
+    question = mask_pii(question)
+
+    # Invoke graph with the cleaned question
+    config = []  # TODO: replace w real config, if needed else remove
+    result = app.invoke(
+        {
+            "user_question": question,
+            "scratchpad": [],
+            "iteration_count": 0,
+            "max_iterations": DEFAULT_MAX_ITERATIONS,
+        },
+        config=config,
+    )
+
     # TODO: Invoke the graph and collect the final state
     # TODO: Pretty-print the structured research report
+    result = ""  # replace with supervisor final state
+    answer = result["analysis"]["answer"]
+    answer = mask_pii(answer)  # belt-and-suspenders on output too
 
     raise NotImplementedError("Wire up the Supervisor graph here.")
 

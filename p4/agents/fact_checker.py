@@ -135,7 +135,6 @@ def _verify_claim(claim: str) -> ClaimVerdict:
         include_metadata=True,
     )
     matches = raw.get("matches", []) if isinstance(raw, dict) else raw["matches"]
-    print(matches)
     if not matches:
         return ClaimVerdict(
             claim=claim,
