@@ -8,6 +8,7 @@ Usage:
     python scripts/ingest.py --input-dir ./data/corpus --namespace primary-corpus
      - OR -
     python -m scripts.ingest --input-dir ./data/corpus --namespace primary-corpus
+    python -m scripts.ingest --input-dir ./data/fact_checker --namespace fact-check-sources
 """
 
 import argparse
@@ -18,7 +19,9 @@ import time
 from pinecone import Pinecone
 from langchain_aws import BedrockEmbeddings
 from langchain_core.documents import Document
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
+
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from logs.log_config import setup_logging
@@ -96,7 +99,7 @@ def load_documents(input_dir: str) -> list:
                 # Handle PDF files
                 # -------------------------
                 if ext == ".pdf":
-                    loader = PyPDFLoader(doc)
+                    loader = PyMuPDFLoader(doc)
                     pdf_pages = loader.load()
 
                     for page in pdf_pages:

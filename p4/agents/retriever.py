@@ -43,7 +43,7 @@ def retriever_node(state: ResearchState) -> dict:
     logger.debug(f"[Retriever] Current task: {task_desc}")
 
     # 1. Embed the query
-    _embedder = _get_embedder
+    _embedder = _get_embedder()
     query_vec = _embedder.embed_query(question)
 
     # 2. Query Pinecone
@@ -133,7 +133,6 @@ def _compress(text: str, question: str, max_tokens: int = 150) -> str:
     Text:
     {text}
     """
-
     llm = _get_llm()
 
     return llm.invoke(prompt).content.strip()

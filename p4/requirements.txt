@@ -24,7 +24,7 @@ aws-sam-cli>=1.130.0
 pydantic>=2.0.0
 
 # Document Processing
-pypdf>=4.0.0
+pymupdf>=1.23.0
 
 # Environment
 python-dotenv>=1.0.0

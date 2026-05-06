@@ -1,9 +1,14 @@
 """Creates instances for reused models and Pinecone indexes."""
 
 import os
+import logging
 
 from langchain_aws import BedrockEmbeddings, ChatBedrock
+from logs.log_config import setup_logging
 from pinecone import Pinecone
+
+setup_logging()
+logger = logging.getLogger("researchflow.retriever")
 
 
 def _get_embedder() -> BedrockEmbeddings:
@@ -14,20 +19,23 @@ def _get_embedder() -> BedrockEmbeddings:
     """
     _embedder = None
     if _embedder is None:
-        _embedder = BedrockEmbeddings(model=os.getenv("BEDROCK_EMBEDDING_MODEL_ID"))
+        _embedder = BedrockEmbeddings(model_id=os.getenv("BEDROCK_EMBEDDING_MODEL_ID"))
     return _embedder
 
 
 def _get_llm() -> ChatBedrock:
     """Create a ChatBedrock llm model instance."""
-    _llm = None
-    if _llm is None:
+    try:
         _llm = ChatBedrock(
             model=os.getenv("BEDROCK_MODEL_ID"),
             temperature=0.1,
             region_name=os.getenv("AWS_REGION"),
         )
-    return _llm
+
+        return _llm
+    except Exception as e:
+        logger.error(f"Unable to initialize ChatBedrock. Error: {e}")
+        raise
 
 
 def _get_index() -> Pinecone.Index:
