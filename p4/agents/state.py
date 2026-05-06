@@ -35,6 +35,7 @@ class ResearchState(TypedDict):
         iteration_count: Number of self-refinement loops executed so far.
         scratchpad: Step-wise log of intermediate outputs for observability.
         user_id: Identifier for cross-thread memory via the Store interface.
+
     """
 
     # question: str

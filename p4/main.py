@@ -8,8 +8,8 @@ a research question against the ingested document corpus.
 import argparse
 import os
 
-from dotenv import load_dotenv
 from agents.supervisor import build_supervisor_graph
+from dotenv import load_dotenv
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,6 +40,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     """
     High-level flow:
+
     1. Load environment variables.
     2. Initialize the Supervisor graph (see agents/supervisor.py).
     3. Invoke the graph with the user's question.

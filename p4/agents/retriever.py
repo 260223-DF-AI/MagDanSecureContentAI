@@ -96,7 +96,8 @@ def retriever_node(state: ResearchState) -> dict:
         )
 
     logger.info(
-        f"[Retriever] Returning top {len(retrieved_chunks)} re-ranked and compressed chunks"
+        f"[Retriever] Returning top {len(retrieved_chunks)} re-ranked and compressed "
+        "chunks"
     )
 
     # 5. Log to scratchpad

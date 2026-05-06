@@ -51,8 +51,8 @@ _VERDICT_PROMPT = ChatPromptTemplate.from_messages(
             "system",
             "You are a precise but decisive fact-checker. Given a claim and supporting"
             "evidence, decide one of: Supported, Unsupported, Inconclusive.\n"
-            "  • Supported = the evidence directly states or strongly implies the claim,"
-            " even if wording differs.\n"
+            "  • Supported = the evidence directly states or strongly implies the claim"
+            ", even if wording differs.\n"
             "  • Unsupported = the evidence contradicts the claim or states the "
             "opposite.\n"
             "  • Inconclusive = the evidence is unrelated, insufficient, or silent on "
@@ -61,7 +61,7 @@ _VERDICT_PROMPT = ChatPromptTemplate.from_messages(
             "Only choose Inconclusive when the evidence truly provides no basis for a "
             "decision.\n\n"
             "Output schema: return JSON with 'verdict' (one of the three labels above, "
-            "exactly as spelled) and 'evidence' (a short string snippet from the input)",
+            "exactly as spelled) and 'evidence' (a short snippet from the input)",
         ),
         ("human", "Claim: {claim}\n\nEvidence:\n{evidence}"),
     ]
@@ -180,9 +180,8 @@ def fact_checker_node(state: ResearchState) -> dict[str, Any]:
 
     """
     analyst_output = state.get("analysis_output", "")
-    logger.info(
-        f"[Fact Checker] validating Analyst's output: '{analyst_output['answer'][:75]}...'..."
-    )
+    answer = analyst_output["answer"]
+    logger.info(f"[Fact Checker] validating Analyst's output: '{answer[:75]}...'")
 
     claims = _split_into_claims(analyst_output["answer"])
     logger.info(f"[Fact Checker] extracted {len(claims)} claims from analyst output.")
