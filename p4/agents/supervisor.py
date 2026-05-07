@@ -8,22 +8,18 @@ the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 from __future__ import annotations
 
 from typing import Any, Optional
-from pathlib import Path
 from dotenv import load_dotenv
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(PROJECT_ROOT / ".env")
-
+load_dotenv()
+import logging
+from langgraph.graph import END, StateGraph
+#from langgraph.graph import CompiledStateGraph
 from langgraph.checkpoint.memory import (
     MemorySaver,
 )  # enables checkpoint history / time travel
-from langgraph.graph import END, StateGraph
-
-from agents.analyst import analyst_node
+#from agents import state
 from agents.fact_checker import fact_checker_node
 from agents.retriever import retriever_node
 from agents.state import PlanTask, ResearchState, _append_scratchpad
-
-load_dotenv()
 
 try:
     from langgraph.types import Command, interrupt, StateSnapshot
@@ -33,10 +29,72 @@ except ImportError:
     Command = None  # HITL pause/resume support
     StateSnapshot = None
 
+logger = logging.getLogger("researchflow.supervisor")
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
-CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint  # noqa: E501
+CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
+MAX_WINDOW_MESSAGES = 12 # for scratchpad truncation to prevent memory bloat during long-running threads
 
+# helpers for sliding window management
+def _trim_messages_sliding_window(
+    state: ResearchState,
+    max_messages: int = MAX_WINDOW_MESSAGES,
+) -> dict[str, Any]:
+    """
+    Keep only the most recent messages in graph state.
+
+    This prevents long-running research sessions from exceeding
+    model token limits while preserving recent conversational context.
+    """
+    messages = state.get("messages", [])
+
+    if len(messages) <= max_messages:
+        return {
+            "messages": messages,
+        }
+
+    trimmed_count = len(messages) - max_messages
+    trimmed_messages = messages[-max_messages:]
+
+    logger.info(
+        "[Memory] Sliding window trimmed %s messages.",
+        trimmed_count,
+    )
+
+    return {
+        "messages": trimmed_messages,
+        "scratchpad": _append_scratchpad(
+            state,
+            (
+                f"Sliding window trimmed {trimmed_count} older "
+                f"message(s). Retained last {max_messages}."
+            ),
+        ),
+    }
+
+def _add_message(
+    state: ResearchState,
+    role: str,
+    content: str,
+) -> dict[str, Any]:
+    """
+    Add a conversational message into graph state,
+    then apply sliding-window trimming.
+    """
+    messages = state.get("messages", [])
+
+    updated_state: ResearchState = {
+        **state,
+        "messages": [
+            *messages,
+            {
+                "role": role,
+                "content": content,
+            },
+        ],
+    }
+
+    return _trim_messages_sliding_window(updated_state)
 
 # helper for self-refinement loop
 def _reset_task_for_retry(
@@ -78,6 +136,10 @@ def planner_node(state: ResearchState) -> dict[str, Any]:
     - Write to the scratchpad for observability.
     """
     question = state["user_question"]
+    logger.info(
+        "[Planner] Building plan for question: %s",
+        question,
+    )
 
     plan: list[PlanTask] = [
         {
@@ -100,7 +162,15 @@ def planner_node(state: ResearchState) -> dict[str, Any]:
         },
     ]
 
+    # Add the user question to message history and trim old messages if needed.
+    planner_message_update = _add_message(
+        state,
+        role="user",
+        content=question,
+    )
+
     return {
+        **planner_message_update,
         "current_plan": plan,
         "current_task_index": 0,
         "current_task": plan[0],
@@ -119,7 +189,6 @@ def planner_node(state: ResearchState) -> dict[str, Any]:
         ),
     }
 
-
 def router(state: ResearchState) -> str:
     """
     Conditional edge: decide which agent to invoke next.
@@ -134,6 +203,10 @@ def router(state: ResearchState) -> str:
         return "critique"
 
     task_type = current_task["task_type"]
+    logger.info(
+        "[Router] Routing task type: %s",
+        task_type,
+    )
 
     if task_type == "retrieve":
         return "retriever"
@@ -294,6 +367,12 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
     iteration_count = state.get("iteration_count", 0)
     max_iterations = state.get("max_iterations", DEFAULT_MAX_ITERATIONS)
 
+    logger.info(
+        "[Critique] Evaluating response | confidence=%s | iteration=%s",
+        confidence,
+        iteration_count,
+    )
+
     fact_check_results = state.get("fact_check_results", {})
     unsupported_claims = fact_check_results.get("unsupported_claims", [])
 
@@ -303,7 +382,15 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
         # analysis = state.get("analysis_output", {})
         # final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))  # noqa: E501
 
+        # Add the accepted assistant/final answer to message history.
+        critique_message_update = _add_message(
+            state,
+            role="assistant",
+            content=final_answer,
+        )
+
         return {
+            **critique_message_update,
             "critique_decision": "accept",
             # "final_answer": final_answer,
             "final_answer": _get_final_answer_from_state(state),
@@ -319,10 +406,26 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
     if next_iteration_count < max_iterations:
         retry_target = "retry_retriever" if unsupported_claims else "retry_analyst"
 
+        logger.warning(
+            "[Critique] Triggering self-refinement: %s",
+            retry_target,
+        )
+
         # smarter retry selection
         retry_updates = _reset_task_for_retry(state, retry_target)
 
+        # Log the retry decision as a system message and trim old messages.
+        retry_message_update = _add_message(
+            state,
+            role="system",
+            content=(
+                f"Self-refinement triggered: {retry_target}. "
+                f"Confidence={confidence}, unsupported_claims={len(unsupported_claims)}."
+            ),
+        )
+
         return {
+            **retry_message_update,
             **retry_updates,
             "critique_decision": retry_target,
             "iteration_count": next_iteration_count,
@@ -340,6 +443,8 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
 
     # HITL escalation after retries are exhausted.
     if interrupt is not None:
+        logger.warning("[Critique] Escalating to HITL review.")
+
         payload = _build_hitl_payload(
             state=state,
             confidence=confidence,
@@ -353,9 +458,17 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
             human_feedback=human_feedback,
             next_iteration_count=next_iteration_count,
         )
+    
+    # Log HITL fallback as a system message and trim old messages.
+    hitl_message_update = _add_message(
+        state,
+        role="system",
+        content="Critique marked output for HITL review, but interrupt is unavailable.",
+    )
 
     # fallback when interrupt is unavailable.
     return {
+        **hitl_message_update,
         "critique_decision": "hitl",
         "hitl_required": True,
         "final_answer": _get_final_answer_from_state(state),
@@ -545,6 +658,8 @@ def main() -> None:
     result = app.invoke(
         {
             "user_question": "What is utilitarianism?",
+            # Initialize message history so planner/critique can append to it.
+            "messages": [],
             "scratchpad": [],
             "iteration_count": 0,
             "max_iterations": DEFAULT_MAX_ITERATIONS,
