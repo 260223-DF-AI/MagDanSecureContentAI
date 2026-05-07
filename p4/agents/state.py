@@ -64,6 +64,10 @@ class ResearchState(TypedDict):
 
     scratchpad: list[str]
 
+    # for memory/message management
+    messages: list[dict[str,str]]
+    #scratchpad: list[str]
+
 
 def _append_scratchpad(state: ResearchState, message: str) -> list[str]:
     return [*state.get("scratchpad", []), message]
