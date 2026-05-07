@@ -19,15 +19,15 @@ from langgraph.checkpoint.memory import (
 #from agents import state
 from agents.fact_checker import fact_checker_node
 from agents.retriever import retriever_node
-from agents.analyst import analyst_node
 from agents.state import PlanTask, ResearchState, _append_scratchpad
 
 try:
-    from langgraph.types import interrupt, Command
-    #interrupt = None
+    from langgraph.types import Command, interrupt, StateSnapshot
+    # interrupt = None
 except ImportError:
     interrupt = None
     Command = None  # HITL pause/resume support
+    StateSnapshot = None
 
 logger = logging.getLogger("researchflow.supervisor")
 DEFAULT_MAX_ITERATIONS = 3
@@ -102,13 +102,11 @@ def _reset_task_for_retry(
     retry_target: str,
 ) -> dict[str, Any]:
     """
-    CHANGE:
-    Handles Plan-and-Execute self-refinement.
+    CHANGE: Handles Plan-and-Execute self-refinement.
 
     - retry_retriever → restart full pipeline
     - retry_analyst → reuse retrieval, redo analysis + fact-check
     """
-
     plan = state.get("current_plan", [])
 
     for task in plan:
@@ -128,15 +126,14 @@ def _reset_task_for_retry(
         "current_task": plan[next_index] if next_index < len(plan) else None,
     }
 
-def planner_node(state: ResearchState) -> dict[str,Any]:
+
+def planner_node(state: ResearchState) -> dict[str, Any]:
     """
     Decompose the user's question into actionable sub-tasks.
 
-    TODO:
     - Use Bedrock LLM to analyze the question.
     - Return a list of sub-tasks (Plan-and-Execute pattern).
     - Write to the scratchpad for observability.
-
     """
     question = state["user_question"]
     logger.info(
@@ -187,7 +184,7 @@ def planner_node(state: ResearchState) -> dict[str,Any]:
         "hitl_required": False,
         "scratchpad": _append_scratchpad(
             state,
-            #f"Planner created {len(plan)} tasks for question: {question}",
+            # f"Planner created {len(plan)} tasks for question: {question}",
             f"Plan-and-Execute created {len(plan)} tasks.",
         ),
     }
@@ -196,7 +193,6 @@ def router(state: ResearchState) -> str:
     """
     Conditional edge: decide which agent to invoke next.
 
-    TODO:
     - Inspect the current plan and state to choose the next node.
     - Return the node name as a string (used by add_conditional_edges).
 
@@ -276,7 +272,7 @@ def _build_hitl_payload(
 
 def _handle_human_feedback(
     state: ResearchState,
-    human_feedback: Any,
+    human_feedback: object,
     next_iteration_count: int,
 ) -> dict[str, Any]:
     """Convert reviewer feedback into graph state updates."""
@@ -357,17 +353,15 @@ def _handle_human_feedback(
     }
 
 
-def critique_node(state: ResearchState) -> dict[str,Any]:
+def critique_node(state: ResearchState) -> dict[str, Any]:
     """
     Evaluate the aggregated response and decide: accept, retry, or escalate.
 
-    TODO:
     - Check confidence_score against the HITL threshold.
     - If below threshold and iterations < max, loop back for refinement.
     - If below threshold and iterations >= max, trigger HITL interrupt.
     - If above threshold, accept and route to END.
     - Increment iteration_count.
-
     """
     confidence = state.get("confidence_score", 0.0)
     iteration_count = state.get("iteration_count", 0)
@@ -385,10 +379,8 @@ def critique_node(state: ResearchState) -> dict[str,Any]:
     next_iteration_count = iteration_count + 1
 
     if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
-        analysis = state.get("analysis_output", {})
-        final_answer = (
-            analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis)
-        )
+        # analysis = state.get("analysis_output", {})
+        # final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))  # noqa: E501
 
         # Add the accepted assistant/final answer to message history.
         critique_message_update = _add_message(
@@ -400,7 +392,7 @@ def critique_node(state: ResearchState) -> dict[str,Any]:
         return {
             **critique_message_update,
             "critique_decision": "accept",
-            #"final_answer": final_answer,
+            # "final_answer": final_answer,
             "final_answer": _get_final_answer_from_state(state),
             "iteration_count": next_iteration_count,
             "hitl_required": False,
@@ -445,7 +437,7 @@ def critique_node(state: ResearchState) -> dict[str,Any]:
                 state,
                 f"Self-refinement triggered → {retry_target} "
                 f"(confidence={confidence}, unsupported={len(unsupported_claims)})",
-                #f"Critique requested refinement: {retry_target}.",
+                # f"Critique requested refinement: {retry_target}.",
             ),
         }
 
@@ -511,7 +503,6 @@ def build_supervisor_graph(checkpointer: Optional[MemorySaver] = None) -> StateG
     """
     Construct and compile the Supervisor StateGraph.
 
-    TODO:
     - Instantiate StateGraph with ResearchState.
     - Add nodes: planner, retriever, analyst, fact_checker, critique.
     - Add edges and conditional edges (router).
@@ -520,6 +511,7 @@ def build_supervisor_graph(checkpointer: Optional[MemorySaver] = None) -> StateG
 
     Returns:
         A compiled LangGraph that can be invoked with an initial state.
+
     """
     graph = StateGraph(ResearchState)
 
@@ -618,7 +610,7 @@ def get_thread_history(app: Any, thread_id: str) -> list[Any]:
     return list(app.get_state_history(build_thread_config(thread_id)))
 
 
-def get_latest_thread_state(app: Any, thread_id: str) -> Any:
+def get_latest_thread_state(app: Any, thread_id: str) -> StateSnapshot:
     """Get the latest checkpointed state."""
     return app.get_state(build_thread_config(thread_id))
 

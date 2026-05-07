@@ -49,15 +49,19 @@ _VERDICT_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are a precise but decisive fact-checker. Given a claim and supporting evidence, "
-            "decide one of: Supported, Unsupported, Inconclusive.\n"
-            "  • Supported = the evidence directly states or strongly implies the claim, even if wording differs.\n"
-            "  • Unsupported = the evidence contradicts the claim or states the opposite.\n"
-            "  • Inconclusive = the evidence is unrelated, insufficient, or silent on the claim.\n"
+            "You are a precise but decisive fact-checker. Given a claim and supporting"
+            "evidence, decide one of: Supported, Unsupported, Inconclusive.\n"
+            "  • Supported = the evidence directly states or strongly implies the claim"
+            ", even if wording differs.\n"
+            "  • Unsupported = the evidence contradicts the claim or states the "
+            "opposite.\n"
+            "  • Inconclusive = the evidence is unrelated, insufficient, or silent on "
+            "the claim.\n"
             "Quote a short snippet from the evidence as your justification. \n"
-            "Only choose Inconclusive when the evidence truly provides no basis for a decision.\n\n"
+            "Only choose Inconclusive when the evidence truly provides no basis for a "
+            "decision.\n\n"
             "Output schema: return JSON with 'verdict' (one of the three labels above, "
-            "exactly as spelled) and 'evidence' (a short string snippet from the input).",
+            "exactly as spelled) and 'evidence' (a short snippet from the input)",
         ),
         ("human", "Claim: {claim}\n\nEvidence:\n{evidence}"),
     ]
@@ -78,11 +82,10 @@ class _SingleVerdict(BaseModel):
 
 def _split_into_claims(answer: str) -> list[str]:
     """
-    Use an LLM to convert the analyst's paragraph into 3–5
-    retrieval-optimized claims. These are short, keyword-rich,
-    and designed specifically for vector search.
-    """
+    Use an LLM to convert the analyst's paragraph into 3–5 retrieval-optimized claims.
 
+    These are short, keyword-rich, and designed specifically for vector search.
+    """
     prompt = f"""
     You will receive an explanation written by an analyst.
     Rewrite it into 3–5 short, standalone factual claims that are
@@ -132,7 +135,6 @@ def _verify_claim(claim: str) -> ClaimVerdict:
         include_metadata=True,
     )
     matches = raw.get("matches", []) if isinstance(raw, dict) else raw["matches"]
-    print(matches)
     if not matches:
         return ClaimVerdict(
             claim=claim,
@@ -140,25 +142,27 @@ def _verify_claim(claim: str) -> ClaimVerdict:
             evidence="No supporting documents found.",
         )
 
-    evidence_block = "\n\n---\n\n".join(
-        m["metadata"].get("text", "") for m in matches
-    )
+    evidence_block = "\n\n---\n\n".join(m["metadata"].get("text", "") for m in matches)
 
     chain = _VERDICT_PROMPT | _verdict_llm.with_structured_output(_SingleVerdict)
     out: _SingleVerdict = chain.invoke({"claim": claim, "evidence": evidence_block})
-    logger.info(f"[Fact Checker] Verifying claim '{claim}' | Evidence: {evidence_block}")
+    logger.info(
+        f"[Fact Checker] Verifying claim '{claim}' | Evidence: {evidence_block}"
+    )
     return ClaimVerdict(claim=claim, verdict=out.verdict, evidence=out.evidence)
 
 
 def _calc_confidence(verdicts: list, counts: dict) -> float:
     """Calculate fact checker's confidence score for all claims."""
     # If everything is inconclusive -> neutral confidence
-    if counts["Supported"]  == 0 and counts["Unsupported"] == 0:
+    if counts["Supported"] == 0 and counts["Unsupported"] == 0:
         return 0.5
 
     # Confidence = (supported - unsupported) / total, clamped to [0, 1].
     total = max(len(verdicts), 1)
-    raw = (counts["Supported"] - counts["Unsupported"] -  0.5 * counts["Inconclusive"]) / total
+    raw = (
+        counts["Supported"] - counts["Unsupported"] - 0.5 * counts["Inconclusive"]
+    ) / total
 
     return max(0.0, min(1.0, raw))
 
@@ -175,7 +179,8 @@ def fact_checker_node(state: ResearchState) -> dict[str, Any]:
 
     """
     analyst_output = state.get("analysis_output", "")
-    logger.info(f"[Fact Checker] validating Analyst's output: '{analyst_output['answer'][:75]}...'...")
+    answer = analyst_output["answer"]
+    logger.info(f"[Fact Checker] validating Analyst's output: '{answer[:75]}...'")
 
     claims = _split_into_claims(analyst_output["answer"])
     logger.info(f"[Fact Checker] extracted {len(claims)} claims from analyst output.")
@@ -194,8 +199,9 @@ def fact_checker_node(state: ResearchState) -> dict[str, Any]:
     confidence = _calc_confidence(verdicts, counts)
     conf_threshold = float(os.getenv("HITL_CONFIDENCE_THRESHOLD"))
     needs_hitl = confidence < conf_threshold or counts["Unsupported"] > 0
-    logger.info(f"[Fact Checker] verified claims: {counts} | HITL required: {needs_hitl}"
-)
+    logger.info(
+        f"[Fact Checker] verified claims: {counts} | HITL required: {needs_hitl}"
+    )
 
     unsupported = []
     evidence = []

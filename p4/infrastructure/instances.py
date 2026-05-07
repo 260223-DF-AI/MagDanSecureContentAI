@@ -1,7 +1,7 @@
 """Creates instances for reused models and Pinecone indexes."""
 
-import os
 import logging
+import os
 
 from langchain_aws import BedrockEmbeddings, ChatBedrock
 from logs.log_config import setup_logging

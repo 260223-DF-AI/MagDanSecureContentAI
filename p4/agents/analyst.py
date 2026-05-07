@@ -13,10 +13,10 @@ from typing import Any, Dict, List, Optional
 
 from langchain_aws import ChatBedrockConverse
 from langchain_core.messages import HumanMessage
+from logs.log_config import setup_logging
 from pydantic import BaseModel, ValidationError
 
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
-from logs.log_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger("researchflow.analyst")
@@ -190,7 +190,6 @@ def analyst_node(state: ResearchState) -> Dict[str, Any]:
     """
     Synthesize retrieved chunks into a structured research response.
 
-    TODO:
     - Build a prompt from the question, sub-task, and retrieved_chunks.
     - Invoke AWS Bedrock (e.g., Claude) with structured output enforcement.
     - Parse the response into an AnalysisResult.
@@ -223,7 +222,6 @@ def analyst_node(state: ResearchState) -> Dict[str, Any]:
     # advance plan
     plan_updates = _advance_plan(state, "analyst")
     logger.info("Advancing plan...")
-
 
     return {
         **plan_updates,

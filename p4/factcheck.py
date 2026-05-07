@@ -1,11 +1,12 @@
-import os
+"""Test fact_checker agent functionality with this script"""
+
+# Move to project root when using to avoid import adjustment
+from agents.analyst import analyst_node
+from agents.fact_checker import fact_checker_node
+from agents.retriever import retriever_node
 from dotenv import load_dotenv
 
 load_dotenv()  # must run BEFORE agent imports
-
-from agents.retriever import retriever_node
-from agents.analyst import analyst_node
-from agents.fact_checker import fact_checker_node
 
 state = {
     "user_question": "What are uses of philosophy?",
