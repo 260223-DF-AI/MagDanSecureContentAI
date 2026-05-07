@@ -17,5 +17,6 @@ ignore = [
     "D212", # choose either D213 or D212, not both
     "D210",
     "D400",
-    "D415"
+    "D415",
+    "ANN401"
 ]

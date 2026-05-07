@@ -12,9 +12,11 @@ import re
 from collections import Counter
 from typing import Any
 
-from infrastructure.instances import _get_embedder, _get_index, _get_llm
+from infrastructure.instances import _get_embedder, _get_index
+from langchain_aws import ChatBedrock
 from langchain_core.prompts import ChatPromptTemplate
 from logs.log_config import setup_logging
+from pinecone import Pinecone
 from pydantic import BaseModel, Field
 
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
@@ -24,7 +26,11 @@ logger = logging.getLogger("researchflow.fact_checker")
 
 _embedder = _get_embedder()
 _pinecone_index = _get_index()
-_verdict_llm = _get_llm()
+_verdict_llm = ChatBedrock(
+    model="global.anthropic.claude-haiku-4-5-20251001-v1:0",
+    temperature=0.1,
+    region_name=os.getenv("AWS_REGION"),
+)
 
 
 class ClaimVerdict(BaseModel):
@@ -51,12 +57,12 @@ _VERDICT_PROMPT = ChatPromptTemplate.from_messages(
             "system",
             "You are a precise but decisive fact-checker. Given a claim and supporting"
             "evidence, decide one of: Supported, Unsupported, Inconclusive.\n"
-            "  • Supported = the evidence directly states or strongly implies the claim"
+            "  • Supported = the evidence directly states or implies the claim"
             ", even if wording differs.\n"
             "  • Unsupported = the evidence contradicts the claim or states the "
             "opposite.\n"
-            "  • Inconclusive = the evidence is unrelated, insufficient, or silent on "
-            "the claim.\n"
+            "  • Inconclusive = the evidence is unrelated, or silent on the"
+            " claim.\n"
             "Quote a short snippet from the evidence as your justification. \n"
             "Only choose Inconclusive when the evidence truly provides no basis for a "
             "decision.\n\n"
@@ -126,15 +132,54 @@ def _split_into_claims(answer: str) -> list[str]:
     return claims
 
 
+def _clean_text(text: str) -> str:
+    # Remove weird whitespace, bullets, and formatting noise
+    text = re.sub(r"[•●▪▶]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _split_sentences(text: str) -> list[str]:
+    return [s.strip() for s in text.split(".") if s.strip()]
+
+
+def _build_evidence_block(claim: str, matches: list) -> str:
+    evidence_sections = []
+
+    for m in matches[:2]:  # only top 2 chunks
+        raw_text = m["metadata"].get("text", "")
+        cleaned = _clean_text(raw_text)
+        sentences = _split_sentences(cleaned)
+
+        # pick the 3 most relevant sentences
+        relevant = [
+            s
+            for s in sentences
+            if any(word.lower() in s.lower() for word in claim.split())
+        ]
+
+        # fallback: if nothing matches, take first 2 sentences
+        if not relevant:
+            relevant = sentences[:2]
+        section = f"[Source: {m['metadata'].get('filename', 'Unknown')}]\n" + "\n".join(
+            f"- {s}" for s in relevant[:3]
+        )
+        evidence_sections.append(section)
+
+    return "\n\n---\n\n".join(evidence_sections)
+
+
 def _verify_claim(claim: str) -> ClaimVerdict:
     query_vec = _embedder.embed_query(claim)
     raw = _pinecone_index.query(
         vector=query_vec,
-        top_k=3,
+        top_k=2,
         namespace="fact-check-sources",
         include_metadata=True,
     )
+
     matches = raw.get("matches", []) if isinstance(raw, dict) else raw["matches"]
+
     if not matches:
         return ClaimVerdict(
             claim=claim,
@@ -142,7 +187,7 @@ def _verify_claim(claim: str) -> ClaimVerdict:
             evidence="No supporting documents found.",
         )
 
-    evidence_block = "\n\n---\n\n".join(m["metadata"].get("text", "") for m in matches)
+    evidence_block = _build_evidence_block(claim, matches)
 
     chain = _VERDICT_PROMPT | _verdict_llm.with_structured_output(_SingleVerdict)
     out: _SingleVerdict = chain.invoke({"claim": claim, "evidence": evidence_block})
@@ -160,11 +205,16 @@ def _calc_confidence(verdicts: list, counts: dict) -> float:
 
     # Confidence = (supported - unsupported) / total, clamped to [0, 1].
     total = max(len(verdicts), 1)
-    raw = (
-        counts["Supported"] - counts["Unsupported"] - 0.5 * counts["Inconclusive"]
-    ) / total
 
-    return max(0.0, min(1.0, raw))
+    # Supported increases confidence
+    # Unsupported decreases confidence
+    # Inconclusive is neutral
+    raw = (counts["Supported"] - counts["Unsupported"]) / total
+
+    # Map from [-1, 1] → [0, 1]
+    confidence = (raw + 1) / 2
+
+    return max(0.0, min(1.0, confidence))
 
 
 def fact_checker_node(state: ResearchState) -> dict[str, Any]:

@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()  # must run BEFORE agent imports
 
 state = {
-    "user_question": "What are uses of philosophy?",
-    "plan": ["What are uses of philosophy?"],
+    "user_question": "What is Utilitarianism?",
+    "plan": ["What is Utilitarianism?"],
     "current_task_index": 0,
 }
 state.update(retriever_node(state))
