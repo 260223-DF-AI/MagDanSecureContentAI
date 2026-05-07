@@ -14,17 +14,15 @@ Usage:
 import argparse
 import logging
 import os
+import re
 import time
 
-from pinecone import Pinecone
 from langchain_aws import BedrockEmbeddings
-from langchain_core.documents import Document
 from langchain_community.document_loaders import PyMuPDFLoader
-
-
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
 from logs.log_config import setup_logging
+from pinecone import Pinecone
 
 setup_logging()
 logger = logging.getLogger("researchflow.ingest")
@@ -119,6 +117,18 @@ def load_documents(input_dir: str) -> list:
     return docs
 
 
+def clean_text(text: str) -> str:
+    """Reduce noisy data in documents."""
+    text = re.sub(r"^\s*\d+/\d+/\d+.*$", "", text, flags=re.MULTILINE)  # remove dates
+    text = re.sub(r"https?://\S+", "", text)  # remove URLs
+    text = re.sub(r"\d{1,2}/\d{1,2}/\d{2,4}.*", "", text)  # remove pdf artifacts
+    # remove citation info
+    text = re.sub(r"CITATION INFORMATION.*?(?=\n\n)", "", text, flags=re.DOTALL)
+    text = re.sub(r"Page \d+ of \d+", "", text)  # remove page numbers
+    text = re.sub(r"\s+", " ", text)  # normalize whitespace
+    return text.strip()
+
+
 def chunk_documents(documents: list) -> list:
     """
     Split documents into smaller chunks for embedding.
@@ -134,19 +144,20 @@ def chunk_documents(documents: list) -> list:
         logger.debug(f"Chunking file: {doc}")
         try:
             text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1200,
-                chunk_overlap=200,
-                separators=["\n\n", "\n", ".", " ", ""],
+                chunk_size=400,  # transcript chunking: 1200
+                chunk_overlap=80,  # transcript chunking: 200
+                separators=["\n\n", "\n", ". "],  # add in transcript chunking: " ", ""
             )
             # Split text
-            texts = text_splitter.split_text(doc.page_content)
+            cleaned = clean_text(doc.page_content)
+            texts = text_splitter.split_text(cleaned)
             # Create list of Documents
             texts = [
                 add_chunk_metadata(
                     d,
                     doc.metadata,
                     {
-                        "source": d,
+                        "source": doc.metadata.get("filename", "unknown"),
                         "chunk_num": n,
                         "id": f"{doc.metadata['filename']}_chunk_{n}",
                         "timestamp": int(time.time()),
@@ -250,8 +261,18 @@ def upsert_to_pinecone(chunks: list, embeddings: list, namespace: str) -> None:
         )
     logger.debug(f"Sample vector obj: {vectors[0]}")
 
+    BATCH_SIZE = 100
+    logger.info(f"Upserting in batches of {BATCH_SIZE}...")
     try:
-        index.upsert(vectors=vectors, namespace=namespace)
+        for start in range(0, len(vectors), BATCH_SIZE):
+            end = start + BATCH_SIZE
+            batch = vectors[start:end]
+
+            index.upsert(vectors=batch, namespace=namespace)
+            logger.info(
+                f"Upserted batch {start // BATCH_SIZE + 1} ({len(batch)} vectors)."
+            )
+
         logger.info("Pinecone upsert completed.")
     except Exception as e:
         logger.error(f"Error upserting vectors to Pinecone: {e}")

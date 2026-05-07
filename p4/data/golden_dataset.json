@@ -1,12 +1,5 @@
 [
   {
-    "question": "REPLACE with a research question relevant to your corpus.",
-    "ground_truth_answer": "REPLACE with the expected correct answer.",
-    "ground_truth_contexts": [
-      "REPLACE with the exact passage(s) from your corpus that support the answer."
-    ]
-  },
-  {
     "question": "What is the difference between act utilitarianism and rule utilitarianism?",
     "ground_truth_answer": "Act utilitarianism is the moral standing that people should act in terms of what provides the greatest amount of utility where rule utilitarianism state people should live by rules that will lead to greatest amount of utility.",
     "ground_truth_contexts": [
@@ -65,7 +58,7 @@
       " Kant viewed morality not in terms of hypothetical imperatives, but through what he called categorical imperatives. These are commands you must follow, regardless of your desires. Categorical imperatives are our moral obligations, and Kant believed that they’re derived from pure reason. He said it didn’t matter whether you want to be moral or not – the moral law is binding on all of us. And he said you don’t need religion to determine what that law is, because what’s right and wrong is totally knowable just by using your intellect."
     ]
   },
-    {
+  {
     "question": "Which moral philosophy is the most permissive?",
     "ground_truth_answer": "Contractarianism",
     "ground_truth_contexts": [

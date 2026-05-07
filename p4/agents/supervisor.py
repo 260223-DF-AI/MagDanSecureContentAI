@@ -16,6 +16,9 @@ from langgraph.graph import END, StateGraph
 from langgraph.checkpoint.memory import (
     MemorySaver,
 )  # enables checkpoint history / time travel
+from langgraph.graph import END, StateGraph
+
+from agents.analyst import analyst_node
 #from agents import state
 from agents.fact_checker import fact_checker_node
 from agents.retriever import retriever_node
