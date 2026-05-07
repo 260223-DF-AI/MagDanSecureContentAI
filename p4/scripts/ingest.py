@@ -9,7 +9,7 @@ Usage:
      - OR -
     python -m scripts.ingest --input-dir ./data/corpus --namespace primary-corpus
     python -m scripts.ingest --input-dir ./data/fact_checker --namespace fact-check-sources
-"""
+"""  # noqa: E501
 
 import argparse
 import logging

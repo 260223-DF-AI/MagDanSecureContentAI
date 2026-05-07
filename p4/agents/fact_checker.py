@@ -16,7 +16,6 @@ from infrastructure.instances import _get_embedder, _get_index
 from langchain_aws import ChatBedrock
 from langchain_core.prompts import ChatPromptTemplate
 from logs.log_config import setup_logging
-from pinecone import Pinecone
 from pydantic import BaseModel, Field
 
 from agents.state import ResearchState, _advance_plan, _append_scratchpad

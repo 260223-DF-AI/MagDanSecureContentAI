@@ -138,6 +138,7 @@ def _compress(text: str, question: str, max_tokens: int = 150) -> str:
 
     return llm.invoke(prompt).content.strip()
 
-def _get_index():
-    """ empty function for pytests"""
+
+def _get_index() -> None:
+    """Empty function for pytests"""
     pass

@@ -6,7 +6,6 @@ a research question against the ingested document corpus.
 """
 
 import argparse
-import os
 
 from agents.supervisor import DEFAULT_MAX_ITERATIONS, build_supervisor_graph
 from dotenv import load_dotenv

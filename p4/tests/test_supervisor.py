@@ -4,23 +4,21 @@ Unit Tests — Supervisor Graph
 Tests the routing logic and conditional edges using mocked sub-agents.
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
-
-from agents.supervisor import planner_node, router, critique_node
+from agents.supervisor import critique_node, planner_node, router
 
 
 class TestSupervisorRouting:
     """Tests for agents.supervisor routing and conditional edges."""
 
     @patch("agents.supervisor.ChatBedrock")
-    def test_planner_decomposes_question(self, mock_chat_bedrock):
+    def test_planner_decomposes_question(self, mock_chat_bedrock):  # noqa: ANN201, ANN001
         """
         Mock the LLM call inside planner_node.
+
         Assert it populates state["plan"] with a non-empty list.
         """
-
         mock_llm = MagicMock()
         mock_response = MagicMock()
         mock_response.content = """
@@ -49,12 +47,12 @@ class TestSupervisorRouting:
         assert isinstance(result["plan"], list)
         assert len(result["plan"]) > 0
 
-    def test_router_selects_retriever(self):
+    def test_router_selects_retriever(self):  # noqa: ANN201
         """
         Provide a state where the next sub-task requires retrieval.
+
         Assert router() returns "retriever".
         """
-
         state = {
             "plan": [
                 {
@@ -74,12 +72,12 @@ class TestSupervisorRouting:
 
         assert route == "retriever"
 
-    def test_router_selects_analyst(self):
+    def test_router_selects_analyst(self):  # noqa: ANN201
         """
         Provide a state where retrieval is complete.
+
         Assert router() returns "analyst".
         """
-
         state = {
             "plan": [
                 {
@@ -104,12 +102,12 @@ class TestSupervisorRouting:
 
         assert route == "analyst"
 
-    def test_critique_triggers_retry(self):
+    def test_critique_triggers_retry(self):  # noqa: ANN201
         """
         Set confidence below threshold, iteration < max.
+
         Assert critique_node routes back for refinement.
         """
-
         state = {
             "confidence_score": 0.45,
             "iteration_count": 1,
@@ -125,12 +123,12 @@ class TestSupervisorRouting:
         assert result["hitl_required"] is False
         assert result["iteration_count"] == 2
 
-    def test_critique_triggers_hitl(self):
+    def test_critique_triggers_hitl(self):  # noqa: ANN201
         """
         Set confidence below threshold, iteration >= max.
+
         Assert critique_node triggers HITL interrupt.
         """
-
         state = {
             "confidence_score": 0.45,
             "iteration_count": 3,
@@ -145,12 +143,12 @@ class TestSupervisorRouting:
         assert result["critique_decision"] == "hitl"
         assert result["hitl_required"] is True
 
-    def test_critique_accepts_response(self):
+    def test_critique_accepts_response(self):  # noqa: ANN201
         """
         Set confidence above threshold.
+
         Assert critique_node routes to END.
         """
-
         state = {
             "confidence_score": 0.88,
             "iteration_count": 1,

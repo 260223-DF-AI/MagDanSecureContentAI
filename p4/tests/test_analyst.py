@@ -5,15 +5,16 @@ Tests the analyst node using mocked Bedrock calls.
 Validates structured output schema and confidence scoring.
 """
 
-from unittest.mock import patch, MagicMock
-import pytest
-from agents.analyst import AnalysisResult, analyst_node
 import json
+from unittest.mock import MagicMock, patch
+
+from agents.analyst import AnalysisResult, analyst_node
+
 
 class TestAnalystAgent:
     """Tests for agents.analyst.analyst_node."""
 
-    def _sample_state(self):
+    def _sample_state(self):  # noqa: ANN202
         return {
             "user_question": "What is utilitarianism?",
             "current_task": {
@@ -45,7 +46,7 @@ class TestAnalystAgent:
             "current_task_index": 1,
             "retrieved_chunks": [
                 {
-                    "text": "Utilitarianism says actions are right if they promote the greatest happiness.",
+                    "text": "Utilitarianism says actions are right if they promote the greatest happiness.",  # noqa: E501
                     "source": "utilitarianism_notes.txt",
                     "page": 1,
                     "chunk_id": "chunk_1",
@@ -59,17 +60,17 @@ class TestAnalystAgent:
             "max_iterations": 3,
             "scratchpad": [],
         }
-    
-    def _mock_response(self):
+
+    def _mock_response(self):  # noqa: ANN202
         response = MagicMock()
         response.content = json.dumps(
             {
-                "answer": "Utilitarianism is an ethical theory focused on maximizing happiness.",
+                "answer": "Utilitarianism is an ethical theory focused on maximizing happiness.",  # noqa: E501
                 "citations": [
                     {
                         "source": "utilitarianism_notes.txt",
                         "page_number": 1,
-                        "excerpt": "actions are right if they promote the greatest happiness",
+                        "excerpt": "actions are right if they promote the greatest happiness",  # noqa: E501
                     }
                 ],
                 "confidence": 0.92,
@@ -78,13 +79,12 @@ class TestAnalystAgent:
         return response
 
     @patch("agents.analyst.ChatBedrockConverse")
-    def test_returns_valid_analysis_result(self, mock_chat_bedrock):
+    def test_returns_valid_analysis_result(self, mock_chat_bedrock):  # noqa: ANN201, ANN001
         """
-        TODO:
         - Mock the Bedrock LLM invocation.
         - Call analyst_node with sample retrieved_chunks.
         - Assert the output parses into a valid AnalysisResult.
-        """
+        """  # noqa: D205
         mock_llm = MagicMock()
         mock_llm.invoke.return_value = self._mock_response()
         mock_chat_bedrock.return_value = mock_llm
@@ -97,12 +97,11 @@ class TestAnalystAgent:
         assert output["confidence_score"] == result.confidence
 
     @patch("agents.analyst.ChatBedrockConverse")
-    def test_includes_citations(self, mock_chat_bedrock):
+    def test_includes_citations(self, mock_chat_bedrock):  # noqa: ANN201, ANN001
         """
-        TODO:
         - Assert the AnalysisResult contains at least one Citation.
         - Assert citation source matches a retrieved chunk source.
-        """
+        """  # noqa: D205
         mock_llm = MagicMock()
         mock_llm.invoke.return_value = self._mock_response()
         mock_chat_bedrock.return_value = mock_llm
@@ -114,11 +113,8 @@ class TestAnalystAgent:
         assert result.citations[0].source == "utilitarianism_notes.txt"
 
     @patch("agents.analyst.ChatBedrockConverse")
-    def test_confidence_within_range(self, mock_chat_bedrock):
-        """
-        TODO:
-        - Assert confidence_score is between 0.0 and 1.0.
-        """
+    def test_confidence_within_range(self, mock_chat_bedrock):  # noqa: ANN201, ANN001
+        """Assert confidence_score is between 0.0 and 1.0."""
         mock_llm = MagicMock()
         mock_llm.invoke.return_value = self._mock_response()
         mock_chat_bedrock.return_value = mock_llm
