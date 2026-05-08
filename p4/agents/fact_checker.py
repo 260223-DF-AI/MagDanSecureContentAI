@@ -150,10 +150,7 @@ def _build_evidence_block(claim: str, matches: list) -> str:
         cleaned = _clean_text(raw_text)
         sentences = _split_sentences(cleaned)
 
-        relevant = [
-            s
-            for s in sentences
-        ]
+        relevant = [s for s in sentences]
 
         # fallback: if nothing matches, take first 2 sentences
         if not relevant:
@@ -189,7 +186,7 @@ def _verify_claim(claim: str) -> ClaimVerdict:
     chain = _VERDICT_PROMPT | _verdict_llm.with_structured_output(_SingleVerdict)
     out: _SingleVerdict = chain.invoke({"claim": claim, "evidence": evidence_block})
     logger.info(
-        f"[Fact Checker] Verifying claim '{claim}' | Evidence: \n\n{evidence_block} \n\n"
+        f"[Fact Checker] Verifying claim '{claim}' | Evidence: \n\n{evidence_block} \n\n"  # noqa: E501
     )
     return ClaimVerdict(claim=claim, verdict=out.verdict, evidence=out.evidence)
 

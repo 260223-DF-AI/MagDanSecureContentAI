@@ -128,13 +128,14 @@ def clean_text(text: str) -> str:
     text = re.sub(r"\s+", " ", text)  # normalize whitespace
     return text.strip()
 
-SECTION_PATTERN = re.compile(
-    r"\n(?P<section>[A-Z][A-Za-z0-9 ,:–\-]{3,})\n"
-)
 
-def extract_sections(cleaned_text: str):
+SECTION_PATTERN = re.compile(r"\n(?P<section>[A-Z][A-Za-z0-9 ,:–\-]{3,})\n")
+
+
+def extract_sections(cleaned_text: str) -> list[str]:
     """
     Split text into (section_title, section_text) pairs.
+
     If no headings found, return a single default section.
     """
     matches = list(SECTION_PATTERN.finditer(cleaned_text))
@@ -155,13 +156,14 @@ def extract_sections(cleaned_text: str):
 
     return sections
 
+
 def chunk_documents(documents: list) -> list:
     """
     Split documents into smaller chunks for embedding.
 
     - Use RecursiveCharacterTextSplitter or sentence-level splitting.
     - Attach chunk metadata (chunk_id, source, page_number, timestamp).
-    
+
     Section-aware chunking for academic fact-checking sources.
     - Clean text
     - Detect section headings
@@ -183,7 +185,11 @@ def chunk_documents(documents: list) -> list:
                 text_splitter = RecursiveCharacterTextSplitter(
                     chunk_size=1500,  # transcript chunking: 1200
                     chunk_overlap=200,  # transcript chunking: 200
-                    separators=["\n\n", "\n", ". "],  # add in transcript chunking: " ", ""
+                    separators=[
+                        "\n\n",
+                        "\n",
+                        ". ",
+                    ],  # add in transcript chunking: " ", ""  # noqa: E501
                 )
                 # Split text
                 section_chunks = text_splitter.split_text(section_text)
