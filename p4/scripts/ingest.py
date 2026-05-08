@@ -128,6 +128,32 @@ def clean_text(text: str) -> str:
     text = re.sub(r"\s+", " ", text)  # normalize whitespace
     return text.strip()
 
+SECTION_PATTERN = re.compile(
+    r"\n(?P<section>[A-Z][A-Za-z0-9 ,:–\-]{3,})\n"
+)
+
+def extract_sections(cleaned_text: str):
+    """
+    Split text into (section_title, section_text) pairs.
+    If no headings found, return a single default section.
+    """
+    matches = list(SECTION_PATTERN.finditer(cleaned_text))
+
+    if not matches:
+        # No headings found → treat whole doc as one section
+        return [("Full Article", cleaned_text)]
+
+    sections = []
+    for i, match in enumerate(matches):
+        section_title = match.group("section").strip()
+
+        start = match.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned_text)
+
+        section_text = cleaned_text[start:end].strip()
+        sections.append((section_title, section_text))
+
+    return sections
 
 def chunk_documents(documents: list) -> list:
     """
@@ -135,6 +161,12 @@ def chunk_documents(documents: list) -> list:
 
     - Use RecursiveCharacterTextSplitter or sentence-level splitting.
     - Attach chunk metadata (chunk_id, source, page_number, timestamp).
+    
+    Section-aware chunking for academic fact-checking sources.
+    - Clean text
+    - Detect section headings
+    - Chunk within each section
+    - Add section metadata
     """
     chunks = []
     logger.info("Chunking documents...")
@@ -143,56 +175,41 @@ def chunk_documents(documents: list) -> list:
     for doc in documents:
         logger.debug(f"Chunking file: {doc}")
         try:
-            text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=400,  # transcript chunking: 1200
-                chunk_overlap=80,  # transcript chunking: 200
-                separators=["\n\n", "\n", ". "],  # add in transcript chunking: " ", ""
-            )
-            # Split text
             cleaned = clean_text(doc.page_content)
-            texts = text_splitter.split_text(cleaned)
-            # Create list of Documents
-            texts = [
-                add_chunk_metadata(
-                    d,
-                    doc.metadata,
-                    {
-                        "source": doc.metadata.get("filename", "unknown"),
-                        "chunk_num": n,
-                        "id": f"{doc.metadata['filename']}_chunk_{n}",
-                        "timestamp": int(time.time()),
-                    },
-                )
-                for n, d in enumerate(texts)
-            ]  # Add chunk metadata
 
-            chunks.extend(texts)
+            # Extract sections from the cleaned text
+            sections = extract_sections(cleaned)
+            for section_index, (section_title, section_text) in enumerate(sections):
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1500,  # transcript chunking: 1200
+                    chunk_overlap=200,  # transcript chunking: 200
+                    separators=["\n\n", "\n", ". "],  # add in transcript chunking: " ", ""
+                )
+                # Split text
+                section_chunks = text_splitter.split_text(section_text)
+                # Add metadata for each chunk
+                for n, chunk_text in enumerate(section_chunks):
+                    metadata = {
+                        "source": doc.metadata.get("filename", "unknown"),
+                        "section": section_title,
+                        "section_index": section_index,
+                        "chunk_num": n,
+                        "id": f"{doc.metadata['filename']}_sec{section_index}_chunk{n}",
+                        "timestamp": int(time.time()),
+                    }
+
+                    chunks.append(
+                        Document(
+                            page_content=chunk_text,
+                            metadata={**doc.metadata, **metadata},
+                        )
+                    )
         except Exception as e:
             logger.error(f"Error chunking {doc}: {e}")
             continue
 
     logger.info(f"Generated {len(chunks)} total chunks.")
     return chunks
-
-
-def add_chunk_metadata(
-    chunk_text: str, base_metadata: dict, new_metadata: dict
-) -> Document:
-    """
-    Create a new Document for a chunk of text.
-
-    Merges file-level and chunk-level metadata.
-    """
-    try:
-        merged = {**base_metadata, **new_metadata}
-        return Document(page_content=chunk_text, metadata=merged)
-
-    except Exception as e:
-        logger.error(
-            f"add_chunk_metadata() failed. chunk_text={chunk_text[:50]}..., "
-            f"base_metadata={base_metadata}, new_metadata={new_metadata}, error={e}"
-        )
-        raise
 
 
 def generate_embeddings(chunks: list) -> list:

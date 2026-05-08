@@ -1,51 +1,51 @@
 [
   {
     "question": "What is the difference between act utilitarianism and rule utilitarianism?",
-    "ground_truth_answer": "Act utilitarianism is the moral standing that people should act in terms of what provides the greatest amount of utility where rule utilitarianism state people should live by rules that will lead to greatest amount of utility.",
-    "ground_truth_contexts": [
+    "reference": "Act utilitarianism is the moral standing that people should act in terms of what provides the greatest amount of utility where rule utilitarianism state people should live by rules that will lead to greatest amount of utility.",
+    "contexts": [
       "When Bentham and Mill first posed their moral theory, it was in a form now known as Act Utilitarianism, sometimes called classical utilitarianism. And it says that, in any given situation, you should choose the action that produces the greatest good for the greatest number. Period. But sometimes, the act that will produce the greatest good for the greatest number can seem just wrong.",
       "This one is called Rule Utilitarianism. This version of the theory says that we ought to live by rules that, in general, are likely to lead to the greatest good for the greatest number. So, yes, there are going to be situations where killing an innocent person will lead to the greatest good for the greatest number. But, rule utilitarians want us to think long-term, and on a larger scale."
     ]
   },
   {
     "question": "What are the different schools of thought on the concept of justice",
-    "ground_truth_answer": "1. Justice as equality - everyone gets the same kind and amount of stuff, no matter what, 2. Need-based justice (supported by John Rawls) - people receive according to their needs, because different people need different things., 3. Merit-based justice (supported by Robert Nozick) - giving unequally based on what each person deserves ('deserves' meaning what they have done).",
-    "ground_truth_contexts": [
+    "reference": "1. Justice as equality - everyone gets the same kind and amount of stuff, no matter what, 2. Need-based justice (supported by John Rawls) - people receive according to their needs, because different people need different things., 3. Merit-based justice (supported by Robert Nozick) - giving unequally based on what each person deserves ('deserves' meaning what they have done).",
+    "contexts": [
       "The area of moral philosophy that considers these questions is known as distributive justice, and there are many different schools of thought here. For example, some people believe that everyone should get the same kind and amount of stuff, no matter what. This concept is known as justice as equality. It sounds totally fair. But, is everyone getting the same stuff really justice? Because I need – or want – different kinds and amounts of stuff than you do. So, there’s also the idea of need-based justice. This says everyone shouldn’t get the same, because our needs aren’t the same. By this logic, justice is getting based on what we need. So those who need more, get more. And some say that this makes sense, while others argue that it amounts to favoring some people over others, putting those who happen to not be in need, at a disadvantage. And if that’s how you look at things, then you probably espouse some kind of merit-based justice, which says that justice actually means giving unequally, based on what each person deserves. And you deserve stuff – or don’t – based on what you’ve done. So this view rewards hard work and punishes trouble-makers. Finally, there’s the very simple-sounding approach advanced by twentieth century American political philosopher John Rawls. He argued that justice is fairness. Any inequalities that exist in a social system, Rawls said, should favor the least well-off, because this levels the playing field of society. This is a form of need-based justice that focuses specifically on making sure that everyone is actually in a position to achieve their basic needs. Rawls reasoned that the world is full of natural inequalities. Think of all the things we talked about when we discussed moral luck; a lot of factors that will shape your life are totally out of your control. So Rawls’ sense of justice means correcting for those disadvantages that are beyond our control. Once again, there are some who argue that justice-is-fairness is actually unfair to those who have gotten the most – either through hard work, or because they happened to win life’s natural lottery. 20th century American philosopher Robert Nozick disagreed with Rawls’ idea that justice-is-fairness. And to demonstrate why, he posed this thought experiment, about professional basketball, which we will explore in the Thought Bubble with some Flash Philosophy. Wilt Chamberlain was a wildly popular basketball player when Nozick created this example. So Nozick said: What if Chamberlain – probably the most famous athlete of his day – decided that he’d play only under certain conditions? Suppose that Chamberlain decides that tickets for games he plays in should cost 25 cents more than games he doesn’t play in. And what’s more, Chamberlain will be paid $100,000 more than the other players. Now, Chamberlain is really popular, so everyone knows that more people will show up to see a game he’s playing in, even if the tickets cost more. Since he is the draw, isn’t he entitled to ask for more money than his teammates? Nozick argued that we can’t – and shouldn’t – try to even out the naturally uneven playing field here. Sure, we start out with unequal amounts of stuff. But Nozick said, we’re each entitled to the stuff we have, provided we didn’t steal it or otherwise obtain it unjustly. So, if you’re the world’s most famous basketball player, you are entitled to have, and want, more stuff, even if others don’t have it. If Chamberlain’s awesomeness at basketball lets him amass a bunch of wealth, while other people go hungry, well, that’s not Wilt’s fault. Thanks, Thought Bubble!"
     ]
   },
   {
     "question": "Who dispelled the common definition of knowledge as 'justified true belief'",
-    "ground_truth_answer": "Edmund Gettier",
-    "ground_truth_contexts": [
+    "reference": "Edmund Gettier",
+    "contexts": [
       "Philosophy wouldn’t be any fun if the key to knowledge were that easy, right? Until American philosopher Edmund Gettier came along in the 1960s, philosophers were in pretty widespread agreement about the definition of knowledge -- that it’s justified true belief. Because, you can believe any old thing, but in order to know something, it just makes sense that you must also have evidence for your belief, and it must be true. In other words, you can have a false belief, but you can’t have false knowledge. And if something you thought you knew turns out not to be true, then the fact is, you never actually knew it, you just believed it. And likewise, you might happen to hold a true belief, but if you don’t have any justification for it, if you just accidentally happened to be right, which happens sometimes – that doesn’t count as knowledge, either. Enter Edmund Gettier. Gettier wrote a short but fabulously influential paper that turned the standard understanding of knowledge upside down. He did this by proposing what came to be known as Gettier cases – situations in which one can have justified true belief, but not knowledge."
     ]
   },
   {
     "question": "What is moral antirealism?",
-    "ground_truth_answer": "Moral antirealism is the belief that there are no moral facts.",
-    "ground_truth_contexts": [
+    "reference": "Moral antirealism is the belief that there are no moral facts.",
+    "contexts": [
       "If you can’t find a way to ground morality, you might be pushed toward another metaethical view: Moral Antirealism. This is the belief that moral propositions don’t refer to objective features of the world at all – that there are no moral facts. So a moral anti-realist would argue that there’s nothing about gratuitous violence that’s inherently wrong. Likewise, they’d say, if you look at the rest of the animal kingdom, sometimes nurturing your kids doesn’t seem like it’s that important. "
     ]
   },
   {
     "question": "What are 2 thought patterns that divulge from skepticism and allow discover truths?",
-    "ground_truth_answer": "Rationalism and empiricism. ",
-    "ground_truth_contexts": [
+    "reference": "Rationalism and empiricism. ",
+    "contexts": [
       "So here, we start to see a split between two different understandings of how we can most reliably get to the nature of reality, and therefore truth. Both were responses to the constant questioning that is skepticism. On the one hand, there was rationalism. And on the other: empiricism Descartes, like Plato long before him, was a lover of reason. He met skepticism with rationalism. He believed that the most real things in life were ideas -- propositions that can be known through pure reason. Deductive truths, which we talked about before, fall into this category. And mathematical truths do, too. But by contrast, empiricism is based on the principle that the most reliable source of knowledge isn’t our ideas, or our reasoning, but our senses. Sure, we can know things  through deduction and basic logic. But what actually leads us to truth, or at least gives us our best shot at getting there, are things like induction, and the scientific method -- ways of thinking that tell us about the material world. Probably the most famous split among philosophers between these two camps was the life-long debate between Plato and Aristotle. Plato was convinced that Truth resided in the immaterial world of Ideas, while Aristotle’s attention was focused firmly on the ground. "
     ]
   },
   {
     "question": "What philosophical writing draws similar questions to the movie Inception?",
-    "ground_truth_answer": "The Republic by Plato",
-    "ground_truth_contexts": [
+    "reference": "The Republic by Plato",
+    "contexts": [
       "The basic question that Inception asks has vexed philosophers all the way back to the very roots of Western philosophy. Is it possible that my current reality isn’t real at all? Before we had Leonardo DiCaprio to walk us through this question we had Plato. [Theme Music] Around 2400 years ago, Plato wrote his famous book, The Republic, in which he describes -- probably better than anyone before or since -- the nature of reality."
     ]
   },
   {
     "question": "What is epistemic responsibility and why is it an important concept?",
-    "ground_truth_answer": "The notion that one is responsible for their beliefs. It is important because a person's beliefs can spread unintentionally.",
-    "ground_truth_contexts": [
+    "reference": "The notion that one is responsible for their beliefs. It is important because a person's beliefs can spread unintentionally.",
+    "contexts": [
       "Normally, when we talk about responsibility, we’re talking about things that you do. But in philosophy, we sometimes face other obligations. Some philosophers have argued that we all have epistemic responsibility – that is, responsibility we have regarding our beliefs. Epistemic responsibility is an especially interesting area of philosophy because it’s where many of its sub-disciplines overlap – where epistemology brushes up against philosophy of religion, which bumps into ethics. And philosophers might argue that we live in a world that could probably use a lot more epistemic responsibility – or at least, more people who understand what it is.",
       "Because Clifford was one of the leading proponents of epistemic responsibility of his time. He most famously, and bluntly, put it this way: “It is wrong always, everywhere, and for anyone, to believe anything upon insufficient evidence.",
       "Now, you might argue, “Don’t I have the right to believe whatever I want, as long as it doesn’t hurt anyone?” Yeah, good question. Clifford argued that there’s no such thing as a private belief. Because: We all talk about our beliefs – some of us do it a lot – and it causes our beliefs to spread. But even if you never vocalize a belief, it still influences the way you act and the way others perceive you. So in this way, a belief can spread subtly, insidiously, without a word being spoken. Think about other kinds of beliefs that lack evidence, for example sexist beliefs. Imagine a modern day sexist in an American university. Most of these people are gonna know that actually expressing their sexist views isn't going to fly. But a sexist’s beliefs, even if they’re never overtly stated, tend to show through in the ways they interact with women and speak of them. So, no matter what: You know them and you know their views and you know their views subtly influence others, particularly if they’re a person in position of authority or respect. Since our views always have the potential to harm others, W. K. Clifford argued that we have an epistemic responsibility only to believe things for which we have evidence. And if you don’t have evidence, you’re morally obligated to refrain from the belief. Basically, you should withhold judgment until you investigate the situation."
@@ -53,22 +53,22 @@
   },
   {
     "question": "What kind of imperatives is Kantian morals based on?",
-    "ground_truth_answer": "Categorical imperatives",
-    "ground_truth_contexts": [
+    "reference": "Categorical imperatives",
+    "contexts": [
       " Kant viewed morality not in terms of hypothetical imperatives, but through what he called categorical imperatives. These are commands you must follow, regardless of your desires. Categorical imperatives are our moral obligations, and Kant believed that they’re derived from pure reason. He said it didn’t matter whether you want to be moral or not – the moral law is binding on all of us. And he said you don’t need religion to determine what that law is, because what’s right and wrong is totally knowable just by using your intellect."
     ]
   },
   {
     "question": "Which moral philosophy is the most permissive?",
-    "ground_truth_answer": "Contractarianism",
-    "ground_truth_contexts": [
+    "reference": "Contractarianism",
+    "contexts": [
       "With contractarianism, there is no morality until we make it up. There’s nothing fundamentally “real” about it. But it becomes real, as soon as you and I agree that it is, because once we agree to particular rules, they become real, and binding. So in a way, contractarianism is the most permissive of the moral theories we’ve looked at. Morality is determined by groups of contractors, so whatever they agree to, goes. Which means, of course, morality can change. If, as a group, we change our minds, we can simply modify the contract. Which is what happens, explicitly, when we change laws, and implicitly, with shifting social mores."
     ]
   },
   {
     "question": "What is eudaimonia?",
-    "ground_truth_answer": "A Greek word, roughly translating to 'a life well lived'",
-    "ground_truth_contexts": [
+    "reference": "A Greek word, roughly translating to 'a life well lived'",
+    "contexts": [
       "Virtue theory says that you should become virtuous because, if you are, then you can attain the pinnacle of humanity. It allows you to achieve what's known as eudaimonia. This is a cool Greek word that doesn’t have a simple English translation. You might say it means “a life well lived.” It’s sometimes translated as “human flourishing.” And a life of eudaimonia is a life of striving. It’s a life of pushing yourself to your limits, and finding success. A eudaimonistic life will be full of the happiness that comes from achieving something really difficult, rather than just having it handed to you. But choosing to live a eudaimonistic life means that you’re never done improving, you’re never to a point where you can just coast. You’re constantly setting new goals, and working to develop new muscles. Choosing to live life in this way also means you'll face disappointments, and failures. Eudaimonia doesn’t mean a life of cupcakes and rainbows. It means the sweet pleasure of sinking into bed at the end of an absolutely exhausting day. It’s the satisfaction of knowing you’ve accomplished a lot, and that you’ve pushed yourself to be the very best person you could be. This is morality, for Aristotle. It’s being the best you can personally be, honing your strengths while working on your weaknesses. And, for Aristotle, the kind of person who lives like this, is the kind of person who will do good things. "
     ]
   }
