@@ -7,37 +7,36 @@ the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 
 from __future__ import annotations
 
-from typing import Any, Optional
-from unittest import result
-from dotenv import load_dotenv
-load_dotenv()
 import logging
-from langgraph.graph import END, StateGraph
-#from langgraph.graph import CompiledStateGraph
+from typing import Any, Optional
+from dotenv import load_dotenv
 from langgraph.checkpoint.memory import (
     MemorySaver,
 )  # enables checkpoint history / time travel
 from langgraph.graph import END, StateGraph
 
 from agents.analyst import analyst_node
-#from agents import state
 from agents.fact_checker import fact_checker_node
 from agents.retriever import retriever_node
 from agents.state import PlanTask, ResearchState, _append_scratchpad
 
 try:
-    from langgraph.types import Command, interrupt, StateSnapshot
+    from langgraph.types import Command, StateSnapshot, interrupt
     # interrupt = None
 except ImportError:
     interrupt = None
     Command = None  # HITL pause/resume support
     StateSnapshot = None
 
+load_dotenv()
 logger = logging.getLogger("researchflow.supervisor")
 DEFAULT_MAX_ITERATIONS = 3
 DEFAULT_HITL_CONFIDENCE_THRESHOLD = 0.75
-CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint
-MAX_WINDOW_MESSAGES = 12 # for scratchpad truncation to prevent memory bloat during long-running threads
+CHECKPOINTER = MemorySaver()  # stores graph state after each node and enables HITL resume, view prev states, rewinding/forking from prev checkpoint  # noqa: E501
+MAX_WINDOW_MESSAGES = (
+    12  # for scratchpad truncation to prevent memory bloat during long-running threads
+)
+
 
 # helpers for sliding window management
 def _trim_messages_sliding_window(
@@ -76,15 +75,13 @@ def _trim_messages_sliding_window(
         ),
     }
 
+
 def _add_message(
     state: ResearchState,
     role: str,
     content: str,
 ) -> dict[str, Any]:
-    """
-    Add a conversational message into graph state,
-    then apply sliding-window trimming.
-    """
+    """Add a conversational message into graph state,then apply sliding-window trimming."""  # noqa: E501
     messages = state.get("messages", [])
 
     updated_state: ResearchState = {
@@ -99,6 +96,7 @@ def _add_message(
     }
 
     return _trim_messages_sliding_window(updated_state)
+
 
 # helper for self-refinement loop
 def _reset_task_for_retry(
@@ -192,6 +190,7 @@ def planner_node(state: ResearchState) -> dict[str, Any]:
             f"Plan-and-Execute created {len(plan)} tasks.",
         ),
     }
+
 
 def router(state: ResearchState) -> str:
     """
@@ -383,8 +382,8 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
     next_iteration_count = iteration_count + 1
 
     if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
-        analysis = state.get("analysis_output", {})
-        final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))  # noqa: E501
+        # analysis = state.get("analysis_output", {})
+        # final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))  # noqa: E501
 
         # Add the accepted assistant/final answer to message history.
         critique_message_update = _add_message(
@@ -423,7 +422,7 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
             role="system",
             content=(
                 f"Self-refinement triggered: {retry_target}. "
-                f"Confidence={confidence}, unsupported_claims={len(unsupported_claims)}."
+                f"Confidence={confidence}, unsupported_claims={len(unsupported_claims)}."  # noqa: E501
             ),
         )
 
@@ -461,7 +460,7 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
             human_feedback=human_feedback,
             next_iteration_count=next_iteration_count,
         )
-    
+
     # Log HITL fallback as a system message and trim old messages.
     hitl_message_update = _add_message(
         state,

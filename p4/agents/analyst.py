@@ -216,7 +216,8 @@ def analyst_node(state: ResearchState) -> Dict[str, Any]:
 
     raw_output = _call_bedrock(prompt)
     result = _parse_response(raw_output, chunks)
-
+    
+    logger.info(f"[Analyst] Answer: {result.answer}")
     logger.info(f"[Analyst] Confidence: {result.confidence}")
 
     # advance plan

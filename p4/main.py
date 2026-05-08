@@ -6,9 +6,12 @@ a research question against the ingested document corpus.
 """
 
 import argparse
-import os
 
-from agents.supervisor import DEFAULT_MAX_ITERATIONS, build_supervisor_graph
+from agents.supervisor import (
+    DEFAULT_MAX_ITERATIONS,
+    build_supervisor_graph,
+    build_thread_config,
+)
 from dotenv import load_dotenv
 from middleware.guardrails import detect_injection, sanitize_input
 from middleware.pii_masking import mask_pii
@@ -52,6 +55,10 @@ def main() -> None:
     args = parse_args()
 
     # Initialize the Supervisor StateGraph
+
+    # to test time travel and HITL
+    thread_id = "demo-thread"
+    config = build_thread_config(thread_id)
     app = build_supervisor_graph()
 
     # TODO: Build the initial graph state from args
@@ -62,7 +69,6 @@ def main() -> None:
     question = mask_pii(question)
 
     # Invoke graph with the cleaned question
-    config = []  # TODO: replace w real config, if needed else remove
     result = app.invoke(
         {
             "user_question": question,
@@ -73,7 +79,6 @@ def main() -> None:
         config=config,
     )
 
-    # TODO: Invoke the graph and collect the final state
     # TODO: Pretty-print the structured research report
     result = ""  # replace with supervisor final state
     answer = result["analysis"]["answer"]

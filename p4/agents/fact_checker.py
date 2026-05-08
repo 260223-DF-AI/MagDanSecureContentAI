@@ -16,7 +16,6 @@ from infrastructure.instances import _get_embedder, _get_index
 from langchain_aws import ChatBedrock
 from langchain_core.prompts import ChatPromptTemplate
 from logs.log_config import setup_logging
-from pinecone import Pinecone
 from pydantic import BaseModel, Field
 
 from agents.state import ResearchState, _advance_plan, _append_scratchpad
@@ -151,11 +150,9 @@ def _build_evidence_block(claim: str, matches: list) -> str:
         cleaned = _clean_text(raw_text)
         sentences = _split_sentences(cleaned)
 
-        # pick the 3 most relevant sentences
         relevant = [
             s
             for s in sentences
-            if any(word.lower() in s.lower() for word in claim.split())
         ]
 
         # fallback: if nothing matches, take first 2 sentences
@@ -166,7 +163,7 @@ def _build_evidence_block(claim: str, matches: list) -> str:
         )
         evidence_sections.append(section)
 
-    return "\n\n---\n\n".join(evidence_sections)
+    return "\n---\n".join(evidence_sections)
 
 
 def _verify_claim(claim: str) -> ClaimVerdict:
@@ -192,7 +189,7 @@ def _verify_claim(claim: str) -> ClaimVerdict:
     chain = _VERDICT_PROMPT | _verdict_llm.with_structured_output(_SingleVerdict)
     out: _SingleVerdict = chain.invoke({"claim": claim, "evidence": evidence_block})
     logger.info(
-        f"[Fact Checker] Verifying claim '{claim}' | Evidence: {evidence_block}"
+        f"[Fact Checker] Verifying claim '{claim}' | Evidence: \n\n{evidence_block} \n\n"
     )
     return ClaimVerdict(claim=claim, verdict=out.verdict, evidence=out.evidence)
 

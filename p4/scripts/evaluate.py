@@ -12,6 +12,7 @@ Usage:
 
 import argparse
 import json
+import time
 
 from agents.supervisor import build_supervisor_graph
 from datasets import Dataset
@@ -129,19 +130,38 @@ def run_ragas_evaluation(predictions: list[dict], golden: list[dict]) -> dict:
 
 def main() -> None:
     """Orchestrate the evaluation pipeline."""
+    print(time.time())
     load_dotenv()
     args = parse_args()
 
     golden = load_golden_dataset(args.golden_dataset)
     predictions = generate_predictions(golden)
-    print(predictions)
     results = run_ragas_evaluation(predictions, golden)
-    print(results)
+
+    # ---- Write to report file ----
+    report_path = f"ragas_report{time.time()}.txt"
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("📄 RAGAS Evaluation Report\n")
+        f.write("=" * 50 + "\n\n")
+
+        f.write("🔮 Predictions:\n")
+        f.write("-" * 50 + "\n")
+        f.write(str(predictions) + "\n\n")
+
+        f.write("📊 Evaluation Results:\n")
+        f.write("-" * 50 + "\n")
+        for metric, score in results.items():
+            f.write(f"{metric:<25} {score:.4f}\n")
+        f.write("-" * 50 + "\n")
+
+    # ---- Console output (optional) ----
     print("\n📊 RAGAS Evaluation Results:")
     print("-" * 40)
     for metric, score in results.items():
         print(f"  {metric:<25} {score:.4f}")
     print("-" * 40)
+
+    print(f"\n📝 Full report saved to: {report_path}")
 
 
 if __name__ == "__main__":

@@ -10,13 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
-from dotenv import load_dotenv
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-load_dotenv(PROJECT_ROOT / ".env")
-
 import streamlit as st
-
 from agents.supervisor import (
     DEFAULT_MAX_ITERATIONS,
     build_supervisor_graph,
@@ -24,7 +18,11 @@ from agents.supervisor import (
     get_thread_history,
     resume_from_hitl,
 )
+from dotenv import load_dotenv
+from langgraph.graph import StateGraph
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+load_dotenv(PROJECT_ROOT / ".env")
 
 st.set_page_config(
     page_title="ResearchFlow Mission Control",
@@ -37,7 +35,7 @@ st.caption("Multi-Agent Research Assistant — LangGraph + RAG + HITL")
 
 
 @st.cache_resource
-def load_graph():
+def load_graph() -> StateGraph:
     """Compile the supervisor graph once for the Streamlit session."""
     return build_supervisor_graph()
 
@@ -210,11 +208,7 @@ with left:
                 or "Unknown Source"
             )
 
-            score = (
-                chunk.get("relevance_score")
-                or chunk.get("score")
-                or 0.0
-            )
+            score = chunk.get("relevance_score") or chunk.get("score") or 0.0
 
             text = (
                 chunk.get("text")
