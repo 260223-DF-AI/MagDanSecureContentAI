@@ -8,6 +8,7 @@ the Planner, Retriever, Analyst, Fact-Checker, and Critique nodes.
 from __future__ import annotations
 
 from typing import Any, Optional
+from unittest import result
 from dotenv import load_dotenv
 load_dotenv()
 import logging
@@ -382,8 +383,8 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
     next_iteration_count = iteration_count + 1
 
     if confidence >= DEFAULT_HITL_CONFIDENCE_THRESHOLD and not unsupported_claims:
-        # analysis = state.get("analysis_output", {})
-        # final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))  # noqa: E501
+        analysis = state.get("analysis_output", {})
+        final_answer = (analysis.get("answer", "") if isinstance(analysis, dict) else str(analysis))  # noqa: E501
 
         # Add the accepted assistant/final answer to message history.
         critique_message_update = _add_message(
@@ -395,7 +396,6 @@ def critique_node(state: ResearchState) -> dict[str, Any]:
         return {
             **critique_message_update,
             "critique_decision": "accept",
-            # "final_answer": final_answer,
             "final_answer": _get_final_answer_from_state(state),
             "iteration_count": next_iteration_count,
             "hitl_required": False,
@@ -683,7 +683,8 @@ def main() -> None:
         )
 
     print("\n=== FINAL ANSWER ===")
-    print(result.get("final_answer"))
+    final_answer = result.get("final_answer") or _get_final_answer_from_state(result)
+    print(final_answer)
 
     print("\n=== RETRIEVED CHUNKS ===")
     for c in result.get("retrieved_chunks", []):
